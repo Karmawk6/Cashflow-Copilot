@@ -1,7 +1,8 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  // Images: add your domain if needed
+  // images: { remotePatterns: [{ hostname: 'example.com' }] },
+}
 
-export default nextConfig;
+export default nextConfig
