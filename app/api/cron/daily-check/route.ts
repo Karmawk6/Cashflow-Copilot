@@ -12,8 +12,9 @@ import {
 // Also protected by CRON_SECRET header
 
 export async function GET(request: Request) {
+  // Fail closed: never run without a configured, matching secret.
   const secret = request.headers.get('x-cron-secret')
-  if (process.env.CRON_SECRET && secret !== process.env.CRON_SECRET) {
+  if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

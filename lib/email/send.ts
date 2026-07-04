@@ -7,6 +7,14 @@ interface SendEmailParams {
   from?: string
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 export async function sendEmail({ to, subject, body, from }: SendEmailParams) {
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
@@ -23,7 +31,7 @@ export async function sendEmail({ to, subject, body, from }: SendEmailParams) {
     to,
     subject,
     text: body,
-    html: body.replace(/\n/g, '<br>'),
+    html: escapeHtml(body).replace(/\n/g, '<br>'),
   })
 
   if (error) throw new Error(error.message)

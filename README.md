@@ -1,6 +1,14 @@
 # CashFlow Copilot
 
-Collections and follow-up automation for consultants and agencies. Track unpaid invoices, stale proposals, and ghosted leads — then draft and send smart follow-up emails.
+Collections and follow-up automation for consultants, agencies, and CDFIs. Track unpaid invoices, stale proposals, and ghosted leads — then draft and send smart follow-up emails.
+
+## 5-minute demo setup
+
+1. Create a free project at [supabase.com](https://supabase.com) → SQL Editor → paste and run all of `supabase/schema.sql`
+2. In `.env.local`, set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (Project Settings → API). Leave `NEXT_PUBLIC_DEMO_MODE=true`
+3. `npm run dev` → sign up → complete onboarding → click **Load demo data**
+
+Demo mode uses template-based AI email drafts (no OpenAI key needed) and logs emails to console instead of sending (no Resend key needed).
 
 ## Tech stack
 

@@ -4,6 +4,14 @@ import Papa from 'papaparse'
 
 type ImportType = 'clients' | 'invoices' | 'proposals'
 
+const MAX_FILE_BYTES = 2 * 1024 * 1024
+const MAX_ROWS = 2000
+
+// Escape ilike wildcards so CSV values match literally (a bare "%" would match every client).
+function escapeLikePattern(term: string): string {
+  return term.replace(/[\\%_]/g, '\\$&')
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -20,6 +28,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing file or type' }, { status: 400 })
   }
 
+  if (file.size > MAX_FILE_BYTES) {
+    return NextResponse.json({ error: 'File too large (max 2MB)' }, { status: 413 })
+  }
+
   const text = await file.text()
   const { data: rows, errors } = Papa.parse(text, {
     header: true,
@@ -29,6 +41,10 @@ export async function POST(request: Request) {
 
   if (errors.length > 0) {
     return NextResponse.json({ error: 'CSV parse error: ' + errors[0].message }, { status: 400 })
+  }
+
+  if ((rows as unknown[]).length > MAX_ROWS) {
+    return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 413 })
   }
 
   let imported = 0
@@ -64,7 +80,7 @@ export async function POST(request: Request) {
             .from('clients')
             .select('id')
             .eq('organization_id', org.id)
-            .ilike('company_name', (row.company_name || row.client_name || row.client).trim())
+            .ilike('company_name', escapeLikePattern((row.company_name || row.client_name || row.client).trim()))
             .single()
           clientId = client?.id ?? null
         }
@@ -94,7 +110,7 @@ export async function POST(request: Request) {
             .from('clients')
             .select('id')
             .eq('organization_id', org.id)
-            .ilike('company_name', (row.company_name || row.client_name || row.client).trim())
+            .ilike('company_name', escapeLikePattern((row.company_name || row.client_name || row.client).trim()))
             .single()
           clientId = client?.id ?? null
         }

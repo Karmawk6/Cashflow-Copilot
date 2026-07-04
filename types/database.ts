@@ -75,7 +75,7 @@ export interface Organization {
   name: string
   slug: string
   owner_id: string
-  business_type: 'consulting' | 'agency' | 'freelance'
+  business_type: 'consulting' | 'agency' | 'freelance' | 'cdfi'
   settings: Json
   created_at: string
   updated_at: string

@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS organizations (
   name TEXT NOT NULL,
   slug TEXT UNIQUE NOT NULL,
   owner_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  business_type TEXT DEFAULT 'consulting' CHECK (business_type IN ('consulting', 'agency', 'freelance')),
+  business_type TEXT DEFAULT 'consulting' CHECK (business_type IN ('consulting', 'agency', 'freelance', 'cdfi')),
   settings JSONB DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -204,7 +204,7 @@ BEGIN
   VALUES (NEW.id, NEW.email);
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
@@ -237,7 +237,31 @@ CREATE POLICY "Users manage their own profile" ON profiles
 CREATE OR REPLACE FUNCTION get_user_org_id()
 RETURNS UUID AS $$
   SELECT organization_id FROM profiles WHERE id = auth.uid();
-$$ LANGUAGE SQL SECURITY DEFINER STABLE;
+$$ LANGUAGE SQL SECURITY DEFINER STABLE SET search_path = public, pg_temp;
+
+-- Tenant-isolation guard: profiles.organization_id may only point at an org the
+-- profile's user owns. Without this, any user could UPDATE their own profile to
+-- a victim's org id and get_user_org_id() would grant them that org's data.
+-- (Relax via an invitations check when multi-user orgs are added.)
+CREATE OR REPLACE FUNCTION public.enforce_profile_org_ownership()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.organization_id IS NOT NULL
+     AND (TG_OP = 'INSERT' OR NEW.organization_id IS DISTINCT FROM OLD.organization_id)
+     AND NOT EXISTS (
+       SELECT 1 FROM organizations
+       WHERE id = NEW.organization_id AND owner_id = NEW.id
+     )
+  THEN
+    RAISE EXCEPTION 'profiles.organization_id must reference an organization owned by this user';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
+
+CREATE OR REPLACE TRIGGER enforce_profile_org_ownership
+  BEFORE INSERT OR UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION public.enforce_profile_org_ownership();
 
 -- clients: org-scoped
 CREATE POLICY "Org members access clients" ON clients
@@ -254,10 +278,25 @@ CREATE POLICY "Org members access invoices" ON invoices
   USING (organization_id = get_user_org_id())
   WITH CHECK (organization_id = get_user_org_id());
 
--- email templates: org templates or global defaults (org_id IS NULL)
-CREATE POLICY "Access org templates and defaults" ON email_templates
-  USING (organization_id = get_user_org_id() OR organization_id IS NULL)
+-- email templates: global defaults (org_id IS NULL) are read-only for everyone;
+-- full CRUD only on the caller's own org rows. A single combined policy would let
+-- any user DELETE the shared defaults or UPDATE them into their own org.
+CREATE POLICY "Read org templates and defaults" ON email_templates
+  FOR SELECT
+  USING (organization_id = get_user_org_id() OR organization_id IS NULL);
+
+CREATE POLICY "Insert org templates" ON email_templates
+  FOR INSERT
   WITH CHECK (organization_id = get_user_org_id());
+
+CREATE POLICY "Update org templates" ON email_templates
+  FOR UPDATE
+  USING (organization_id = get_user_org_id())
+  WITH CHECK (organization_id = get_user_org_id());
+
+CREATE POLICY "Delete org templates" ON email_templates
+  FOR DELETE
+  USING (organization_id = get_user_org_id());
 
 -- follow_up_events: org-scoped
 CREATE POLICY "Org members access follow_up_events" ON follow_up_events

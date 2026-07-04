@@ -11,6 +11,7 @@ const businessTypes = [
   { value: 'consulting', label: 'Consultant', desc: 'Solo or boutique consulting firm' },
   { value: 'agency', label: 'Agency', desc: 'Design, dev, marketing or service agency' },
   { value: 'freelance', label: 'Freelancer', desc: 'Independent contractor or freelancer' },
+  { value: 'cdfi', label: 'CDFI', desc: 'Community development financial institution' },
 ]
 
 export default function OnboardingPage() {

@@ -80,7 +80,7 @@ export async function completeOnboarding(_prevState: ActionState, formData: Form
   if (!user) redirect('/login')
 
   const orgName = formData.get('orgName') as string
-  const businessType = formData.get('businessType') as 'consulting' | 'agency' | 'freelance'
+  const businessType = formData.get('businessType') as 'consulting' | 'agency' | 'freelance' | 'cdfi'
   const fullName = formData.get('fullName') as string
 
   if (!orgName || orgName.length < 2) {
