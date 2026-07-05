@@ -44,10 +44,20 @@ export const getOrganization = cache(async () => {
   const user = await getUser()
   if (!user) return null
 
+  // Resolve by membership (profiles.organization_id), not ownership —
+  // invited teammates belong to an org they don't own.
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('organization_id')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile?.organization_id) return null
+
   const { data } = await supabase
     .from('organizations')
     .select('*')
-    .eq('owner_id', user.id)
+    .eq('id', profile.organization_id)
     .single()
 
   return data

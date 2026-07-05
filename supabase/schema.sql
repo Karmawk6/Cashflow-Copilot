@@ -195,6 +195,21 @@ CREATE TRIGGER update_follow_up_rules_updated_at
   BEFORE UPDATE ON follow_up_rules FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
 
 -- =============================================================================
+-- INVITATIONS (multi-user workspaces)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS invitations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE NOT NULL,
+  email TEXT NOT NULL,
+  role TEXT DEFAULT 'member' CHECK (role IN ('owner', 'member')),
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'revoked')),
+  invited_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  accepted_at TIMESTAMPTZ,
+  UNIQUE (organization_id, email)
+);
+
+-- =============================================================================
 -- AUTO-CREATE PROFILE ON SIGNUP
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -223,15 +238,34 @@ ALTER TABLE follow_up_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE follow_up_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
 
--- organizations: owner can manage their own org
+-- organizations: owner can manage their own org; members can read theirs
 CREATE POLICY "Users manage their own organization" ON organizations
   USING (owner_id = auth.uid())
   WITH CHECK (owner_id = auth.uid());
 
--- profiles: users manage their own profile
+CREATE POLICY "Members read their organization" ON organizations
+  FOR SELECT
+  USING (id = get_user_org_id());
+
+-- profiles: users manage their own profile; members can see teammates
 CREATE POLICY "Users manage their own profile" ON profiles
   USING (id = auth.uid())
   WITH CHECK (id = auth.uid());
+
+CREATE POLICY "Members read org teammates" ON profiles
+  FOR SELECT
+  USING (organization_id IS NOT NULL AND organization_id = get_user_org_id());
+
+-- invitations: owner manages; invitee can read ones addressed to them
+ALTER TABLE invitations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Owner manages org invitations" ON invitations
+  USING (organization_id IN (SELECT id FROM organizations WHERE owner_id = auth.uid()))
+  WITH CHECK (organization_id IN (SELECT id FROM organizations WHERE owner_id = auth.uid()));
+
+CREATE POLICY "Invitee reads own invitations" ON invitations
+  FOR SELECT
+  USING (lower(email) = lower(auth.jwt()->>'email'));
 
 -- Helper function: get org id for current user
 CREATE OR REPLACE FUNCTION get_user_org_id()
@@ -252,8 +286,15 @@ BEGIN
        SELECT 1 FROM organizations
        WHERE id = NEW.organization_id AND owner_id = NEW.id
      )
+     AND NOT EXISTS (
+       SELECT 1 FROM invitations i
+       JOIN auth.users u ON u.id = NEW.id
+       WHERE i.organization_id = NEW.organization_id
+         AND lower(i.email) = lower(u.email)
+         AND i.status = 'accepted'
+     )
   THEN
-    RAISE EXCEPTION 'profiles.organization_id must reference an organization owned by this user';
+    RAISE EXCEPTION 'profiles.organization_id must reference an organization owned by this user or one they were invited to';
   END IF;
   RETURN NEW;
 END;

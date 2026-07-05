@@ -62,12 +62,38 @@ export type Database = {
         Update: DbRow<Partial<Omit<Activity, 'id' | 'created_at'>>>
         Relationships: []
       }
+      invitations: {
+        Row: DbRow<Invitation>
+        Insert: DbRow<Partial<Omit<Invitation, 'id' | 'created_at'>>>
+        Update: DbRow<Partial<Omit<Invitation, 'id' | 'created_at'>>>
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
-    Functions: { [_ in never]: never }
+    Functions: {
+      accept_invitation: {
+        Args: { invitation_id: string }
+        Returns: undefined
+      }
+      my_pending_invitations: {
+        Args: Record<string, never>
+        Returns: { id: string; organization_name: string; role: string }[]
+      }
+    }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
   }
+}
+
+export interface Invitation {
+  id: string
+  organization_id: string
+  email: string
+  role: 'owner' | 'member'
+  status: 'pending' | 'accepted' | 'revoked'
+  invited_by: string | null
+  created_at: string
+  accepted_at: string | null
 }
 
 export interface Organization {
