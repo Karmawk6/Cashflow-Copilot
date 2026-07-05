@@ -14,7 +14,6 @@ import {
   LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { logout } from '@/lib/actions/auth'
 
 const navGroups = [
   {
@@ -41,23 +40,21 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-60 flex-col border-r bg-card">
+    <div className="flex h-full w-60 flex-col bg-[hsl(228_30%_9%)] text-[hsl(220_20%_78%)]">
       {/* Logo */}
-      <div className="flex h-14 items-center gap-2.5 border-b px-4">
-        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
+      <div className="flex h-14 items-center gap-2.5 border-b border-white/10 px-4">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[hsl(229_70%_55%)] to-[hsl(280_55%_55%)] text-sm font-bold text-white">
           C
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="font-semibold text-sm">CashFlow Copilot</span>
-        </div>
+        <span className="text-sm font-semibold text-white">CashFlow Copilot</span>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2">
         {navGroups.map((group, gi) => (
-          <div key={gi} className={gi > 0 ? 'mt-4 border-t pt-4' : undefined}>
+          <div key={gi} className={gi > 0 ? 'mt-4 border-t border-white/10 pt-4' : undefined}>
             {group.label && (
-              <p className="mb-1 px-3 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              <p className="mb-1 px-3 text-[11px] font-medium uppercase tracking-wider text-[hsl(220_15%_50%)]">
                 {group.label}
               </p>
             )}
@@ -72,11 +69,16 @@ export function Sidebar() {
                       className={cn(
                         'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                         isActive
-                          ? 'bg-accent font-medium text-primary'
-                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                          ? 'bg-white/10 text-white'
+                          : 'hover:bg-white/5 hover:text-white'
                       )}
                     >
-                      <Icon className="h-4 w-4 shrink-0" />
+                      <Icon
+                        className={cn(
+                          'h-4 w-4 shrink-0',
+                          isActive && 'text-[hsl(229_80%_74%)]'
+                        )}
+                      />
                       {item.label}
                     </Link>
                   </li>
@@ -88,11 +90,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t p-2">
-        <form action={logout}>
+      <div className="border-t border-white/10 p-2">
+        <form action="/auth/signout" method="POST">
           <button
             type="submit"
-            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-white/5 hover:text-white"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             Sign out

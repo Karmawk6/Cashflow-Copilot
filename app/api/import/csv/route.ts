@@ -33,31 +33,55 @@ export async function POST(request: Request) {
   const org = await getOrganization()
   if (!org) return NextResponse.json({ error: 'No organization' }, { status: 400 })
 
-  const formData = await request.formData()
-  const file = formData.get('file') as File
-  const type = formData.get('type') as ImportType
+  // Two entry modes: JSON with pre-mapped canonical rows (from the column-mapper
+  // UI), or a raw CSV file upload that relies on header-alias guessing.
+  let rows: Record<string, string>[]
+  let type: ImportType
+  let detectedHeaders: string[]
 
-  if (!file || !type) {
-    return NextResponse.json({ error: 'Missing file or type' }, { status: 400 })
-  }
+  const contentType = request.headers.get('content-type') ?? ''
+  if (contentType.includes('application/json')) {
+    const body = await request.json().catch(() => null)
+    type = body?.type
+    const rawRows = body?.rows
+    if (!type || !['clients', 'invoices', 'proposals'].includes(type) || !Array.isArray(rawRows)) {
+      return NextResponse.json({ error: 'Missing type or rows' }, { status: 400 })
+    }
+    if (rawRows.length > MAX_ROWS) {
+      return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 413 })
+    }
+    rows = rawRows.filter((r): r is Record<string, string> => typeof r === 'object' && r !== null)
+    detectedHeaders = rows.length > 0 ? Object.keys(rows[0]) : []
+  } else {
+    const formData = await request.formData()
+    const file = formData.get('file') as File
+    type = formData.get('type') as ImportType
 
-  if (file.size > MAX_FILE_BYTES) {
-    return NextResponse.json({ error: 'File too large (max 2MB)' }, { status: 413 })
-  }
+    if (!file || !type) {
+      return NextResponse.json({ error: 'Missing file or type' }, { status: 400 })
+    }
 
-  const text = await file.text()
-  const { data: rows, errors, meta } = Papa.parse(text, {
-    header: true,
-    skipEmptyLines: true,
-    transformHeader: (h) => h.trim().toLowerCase().replace(/\s+/g, '_'),
-  })
+    if (file.size > MAX_FILE_BYTES) {
+      return NextResponse.json({ error: 'File too large (max 2MB)' }, { status: 413 })
+    }
 
-  if (errors.length > 0) {
-    return NextResponse.json({ error: 'CSV parse error: ' + errors[0].message }, { status: 400 })
-  }
+    const text = await file.text()
+    const { data, errors, meta } = Papa.parse(text, {
+      header: true,
+      skipEmptyLines: true,
+      transformHeader: (h) => h.trim().toLowerCase().replace(/\s+/g, '_'),
+    })
 
-  if ((rows as unknown[]).length > MAX_ROWS) {
-    return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 413 })
+    if (errors.length > 0) {
+      return NextResponse.json({ error: 'CSV parse error: ' + errors[0].message }, { status: 400 })
+    }
+
+    if ((data as unknown[]).length > MAX_ROWS) {
+      return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 413 })
+    }
+
+    rows = data as Record<string, string>[]
+    detectedHeaders = meta.fields ?? []
   }
 
   let imported = 0
@@ -69,8 +93,8 @@ export async function POST(request: Request) {
     skipReasons[reason] = (skipReasons[reason] ?? 0) + 1
   }
 
-  for (let i = 0; i < (rows as Record<string, string>[]).length; i++) {
-    const row = (rows as Record<string, string>[])[i]
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i]
 
     try {
       if (type === 'clients') {
@@ -165,8 +189,8 @@ export async function POST(request: Request) {
     skipped,
     failed: failedRows.length,
     failedRows: failedRows.slice(0, 10),
-    total: (rows as unknown[]).length,
+    total: rows.length,
     skipReasons,
-    detectedHeaders: meta.fields ?? [],
+    detectedHeaders,
   })
 }

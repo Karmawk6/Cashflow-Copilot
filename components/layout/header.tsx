@@ -1,4 +1,3 @@
-import { logout } from '@/lib/actions/auth'
 import { getUser } from '@/lib/supabase/server'
 import { PageTitle } from '@/components/layout/page-title'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -46,13 +45,11 @@ export async function Header() {
             <a href="/settings">Settings</a>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <form action={logout}>
-            <DropdownMenuItem asChild>
-              <button type="submit" className="w-full cursor-pointer text-destructive">
-                Sign out
-              </button>
-            </DropdownMenuItem>
-          </form>
+          <DropdownMenuItem asChild>
+            <a href="/auth/signout" className="cursor-pointer text-destructive">
+              Sign out
+            </a>
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

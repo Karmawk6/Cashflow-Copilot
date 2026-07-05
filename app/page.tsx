@@ -61,7 +61,12 @@ export default async function HomePage() {
     <div className="min-h-screen bg-background">
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-semibold">CashFlow Copilot</span>
+          <span className="flex items-center gap-2.5 text-lg font-semibold">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[hsl(229_70%_55%)] to-[hsl(280_55%_55%)] text-sm font-bold text-white">
+              C
+            </span>
+            CashFlow Copilot
+          </span>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild>
               <Link href="/login">Log in</Link>
@@ -75,9 +80,11 @@ export default async function HomePage() {
 
       <main>
         <section className="mx-auto max-w-4xl px-6 pb-16 pt-24 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Stop losing revenue to
-            <span className="text-primary"> forgotten follow-ups</span>
+          <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
+            Stop losing revenue to{' '}
+            <span className="bg-gradient-to-r from-[hsl(229_65%_45%)] to-[hsl(280_55%_50%)] bg-clip-text text-transparent">
+              forgotten follow-ups
+            </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
             CashFlow Copilot gives consultants and agencies one dashboard for
