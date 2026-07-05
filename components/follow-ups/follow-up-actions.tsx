@@ -12,7 +12,7 @@ interface FollowUpActionsProps {
   followUpId: string
   clientName: string
   clientEmail?: string | null
-  type: 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin'
+  type: 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'
   amount?: number
   currency?: string
   invoiceNumber?: string
@@ -25,6 +25,7 @@ const typeToEmailType: Record<string, EmailTemplateType> = {
   invoice_reminder: 'invoice_reminder',
   proposal_followup: 'proposal_followup',
   ghosted_checkin: 'ghosted_checkin',
+  payment_upcoming: 'payment_upcoming',
 }
 
 export function FollowUpActions({

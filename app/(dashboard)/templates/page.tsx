@@ -15,6 +15,7 @@ const typeLabels: Record<EmailTemplateType, string> = {
   second_reminder: 'Second Reminder',
   final_nudge: 'Final Nudge',
   ghosted_checkin: 'Ghosted Check-In',
+  payment_upcoming: 'Upcoming Payment',
 }
 
 const toneLabels: Record<EmailTone, string> = {

@@ -6,7 +6,7 @@ import type { ActivityType, Json } from '@/types/database'
 interface LogActivityParams {
   orgId: string
   type: ActivityType
-  entityType?: 'invoice' | 'proposal' | 'client' | 'follow_up'
+  entityType?: 'invoice' | 'proposal' | 'client' | 'follow_up' | 'recurring_schedule'
   entityId?: string
   description: string
   metadata?: Record<string, Json>

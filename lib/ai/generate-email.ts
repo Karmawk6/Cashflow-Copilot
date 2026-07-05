@@ -31,6 +31,8 @@ const typePrompt: Record<EmailTemplateType, string> = {
   second_reminder: 'sending a second reminder for an invoice that is overdue and the client has not responded to the first reminder',
   final_nudge: 'sending a final notice for a significantly overdue invoice, making clear it needs immediate attention',
   ghosted_checkin: 'checking in with a prospect or client who has gone quiet after previous communication',
+  payment_upcoming:
+    'sending a courtesy heads-up that a recurring payment (retainer or installment) is coming due soon — the client is NOT late, so the tone should be light and appreciative, never pushy',
 }
 
 export async function generateEmail(params: GenerateEmailParams): Promise<{ subject: string; body: string }> {
@@ -121,6 +123,10 @@ function generateDemoEmail(params: GenerateEmailParams): { subject: string; body
     ghosted_checkin: {
       subject: `Still thinking about working together?`,
       body: `Hi ${params.clientName},\n\nI wanted to reach out since we haven't connected in a while. Totally understand things get busy — just wanted to check in and see if you're still interested in moving forward.\n\nIf the timing isn't right or you've decided to go in a different direction, no worries at all. Just let me know either way so I can update my records.\n\nHope to hear from you!\n\n${params.senderName ?? 'Your Name'}`,
+    },
+    payment_upcoming: {
+      subject: `Upcoming payment: Invoice ${params.invoiceNumber ?? '#'}${params.dueDate ? ` due ${new Date(params.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}` : ''}`,
+      body: `Hi ${params.clientName},\n\nJust a friendly heads-up that your next payment of ${amountStr} (Invoice ${params.invoiceNumber ?? '#'}) is coming up${params.dueDate ? `, due ${new Date(params.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}` : ''}.\n\nIf your payment is already on the way, no action is needed — thank you! Otherwise, you can arrange it at your convenience.${params.paymentLink ? `\n\nYou can pay securely here: ${params.paymentLink}` : ''}\n\nThanks as always,\n${params.senderName ?? 'Your Name'}`,
     },
   }
 

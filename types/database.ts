@@ -68,6 +68,18 @@ export type Database = {
         Update: DbRow<Partial<Omit<Invitation, 'id' | 'created_at'>>>
         Relationships: []
       }
+      recurring_schedules: {
+        Row: DbRow<RecurringSchedule>
+        Insert: DbRow<Partial<Omit<RecurringSchedule, 'id' | 'created_at' | 'updated_at'>>>
+        Update: DbRow<Partial<Omit<RecurringSchedule, 'id' | 'created_at'>>>
+        Relationships: []
+      }
+      gmail_connections: {
+        Row: DbRow<GmailConnection>
+        Insert: DbRow<Partial<Omit<GmailConnection, 'id' | 'created_at' | 'updated_at'>>>
+        Update: DbRow<Partial<Omit<GmailConnection, 'id' | 'created_at'>>>
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -176,6 +188,46 @@ export interface Invoice {
   payment_link: string | null
   notes: string | null
   last_reminder_date: string | null
+  recurring_schedule_id: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type RecurringFrequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'
+export type RecurringKind = 'retainer' | 'payment_plan'
+export type RecurringStatus = 'active' | 'paused' | 'completed' | 'cancelled'
+
+export interface RecurringSchedule {
+  id: string
+  organization_id: string
+  client_id: string
+  title: string
+  kind: RecurringKind
+  amount: number
+  currency: string
+  frequency: RecurringFrequency
+  next_due_date: string
+  anchor_day: number
+  end_date: string | null
+  total_installments: number | null
+  installments_generated: number
+  remind_days_before: number
+  status: RecurringStatus
+  payment_link: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface GmailConnection {
+  id: string
+  user_id: string
+  organization_id: string
+  gmail_address: string
+  access_token: string
+  refresh_token: string
+  token_expires_at: string
+  status: 'active' | 'error'
   created_at: string
   updated_at: string
 }
@@ -186,6 +238,7 @@ export type EmailTemplateType =
   | 'second_reminder'
   | 'final_nudge'
   | 'ghosted_checkin'
+  | 'payment_upcoming'
 
 export type EmailTone = 'friendly' | 'professional' | 'firm'
 
@@ -202,7 +255,7 @@ export interface EmailTemplate {
   updated_at: string
 }
 
-export type FollowUpEventType = 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin'
+export type FollowUpEventType = 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'
 export type FollowUpEventStatus = 'pending' | 'sent' | 'completed' | 'skipped'
 
 export interface FollowUpEvent {
@@ -251,13 +304,16 @@ export type ActivityType =
   | 'client_updated'
   | 'followup_completed'
   | 'followup_skipped'
+  | 'schedule_created'
+  | 'schedule_updated'
+  | 'invoice_generated'
 
 export interface Activity {
   id: string
   organization_id: string
   user_id: string | null
   type: ActivityType
-  entity_type: 'invoice' | 'proposal' | 'client' | 'follow_up' | null
+  entity_type: 'invoice' | 'proposal' | 'client' | 'follow_up' | 'recurring_schedule' | null
   entity_id: string | null
   description: string
   metadata: Json
@@ -266,6 +322,10 @@ export interface Activity {
 
 // Joined types used in the UI
 export interface ProposalWithClient extends Proposal {
+  client: Pick<Client, 'company_name' | 'contact_name' | 'email'>
+}
+
+export interface RecurringScheduleWithClient extends RecurringSchedule {
   client: Pick<Client, 'company_name' | 'contact_name' | 'email'>
 }
 

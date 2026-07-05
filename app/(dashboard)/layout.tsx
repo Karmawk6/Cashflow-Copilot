@@ -7,8 +7,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getUser()
   if (!user) redirect('/login')
 
+  // fixed inset-0 (not h-screen): portalled selects/toasts can briefly grow the
+  // body taller than the viewport, and a trackpad scroll then drags an h-screen
+  // shell out of view (sidebar footer ends mid-page). A fixed shell can't move.
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="fixed inset-0 flex overflow-hidden">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />

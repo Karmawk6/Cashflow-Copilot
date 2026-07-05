@@ -43,6 +43,31 @@ export async function POST() {
 
   const [meridian, bluestone, vertex, harlow, cascade] = clients
 
+  // Recurring schedules: an ongoing retainer and a CDFI-style payment plan.
+  // Due dates sit outside the reminder window so the demo stays stable.
+  const anchorOf = (dateOnly: string) => Number(dateOnly.split('-')[2])
+  const retainerDue = daysAgo(-20)
+  const planDue = daysAgo(-10)
+  const { data: schedules } = await supabase.from('recurring_schedules').insert([
+    {
+      organization_id: org.id, client_id: harlow.id,
+      title: 'Monthly consulting retainer', kind: 'retainer',
+      amount: 5000, currency: 'USD', frequency: 'monthly',
+      next_due_date: retainerDue, anchor_day: anchorOf(retainerDue),
+      installments_generated: 1, remind_days_before: 3, status: 'active',
+    },
+    {
+      organization_id: org.id, client_id: vertex.id,
+      title: 'Equipment loan repayment', kind: 'payment_plan',
+      amount: 1250, currency: 'USD', frequency: 'monthly',
+      next_due_date: planDue, anchor_day: anchorOf(planDue),
+      total_installments: 24, installments_generated: 7,
+      remind_days_before: 5, status: 'active',
+    },
+  ]).select()
+
+  const retainerSchedule = schedules?.[0]
+
   // Create invoices
   await supabase.from('invoices').insert([
     {
@@ -59,9 +84,10 @@ export async function POST() {
     },
     {
       organization_id: org.id, client_id: harlow.id,
-      invoice_number: 'INV-2025-003', title: 'Annual Retainer — June',
+      invoice_number: 'INV-2025-003', title: 'Monthly consulting retainer — June',
       amount: 5000, amount_paid: 0, issue_date: daysAgo(10), due_date: daysAgo(0),
       status: 'sent', priority: 'medium', currency: 'USD',
+      recurring_schedule_id: retainerSchedule?.id ?? null,
     },
     {
       organization_id: org.id, client_id: meridian.id,

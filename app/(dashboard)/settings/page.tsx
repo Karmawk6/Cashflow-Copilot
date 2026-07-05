@@ -1,8 +1,11 @@
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SettingsForm } from '@/components/settings/settings-form'
 import { TeamSection } from '@/components/settings/team-section'
+import { GmailConnectionCard } from '@/components/settings/gmail-connection'
+import { gmailOauthConfigured } from '@/lib/gmail/oauth'
 import { CsvImport } from '@/components/shared/csv-import'
 import { DemoSeedButton } from '@/components/shared/demo-seed-button'
 
@@ -15,7 +18,7 @@ export default async function SettingsPage() {
 
   const isOwner = org ? org.owner_id === user.id : false
 
-  const [{ data: profile }, { data: followUpRules }, { data: members }, { data: invitations }] =
+  const [{ data: profile }, { data: followUpRules }, { data: members }, { data: invitations }, { data: gmailConnection }] =
     await Promise.all([
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       org
@@ -36,6 +39,11 @@ export default async function SettingsPage() {
             .eq('status', 'pending')
             .order('created_at')
         : Promise.resolve({ data: [] }),
+      supabase
+        .from('gmail_connections')
+        .select('gmail_address, status')
+        .eq('user_id', user.id)
+        .maybeSingle(),
     ])
 
   return (
@@ -51,6 +59,14 @@ export default async function SettingsPage() {
         org={org}
         followUpRules={followUpRules ?? []}
       />
+      {org && (
+        <Suspense>
+          <GmailConnectionCard
+            configured={gmailOauthConfigured()}
+            connection={gmailConnection as { gmail_address: string; status: 'active' | 'error' } | null}
+          />
+        </Suspense>
+      )}
       {org && (
         <TeamSection
           members={members ?? []}

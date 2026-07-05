@@ -65,6 +65,7 @@ export function TemplateEditor({ mode, template }: TemplateEditorProps) {
                     <SelectItem value="second_reminder">Second Reminder</SelectItem>
                     <SelectItem value="final_nudge">Final Nudge</SelectItem>
                     <SelectItem value="ghosted_checkin">Ghosted Check-In</SelectItem>
+                    <SelectItem value="payment_upcoming">Upcoming Payment</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

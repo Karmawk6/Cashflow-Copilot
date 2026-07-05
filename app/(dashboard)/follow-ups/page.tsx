@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { PriorityBadge } from '@/components/shared/priority-badge'
 import { EmptyState } from '@/components/shared/empty-state'
 import { FollowUpActions } from '@/components/follow-ups/follow-up-actions'
-import { Bell, CheckCircle, SkipForward, Receipt, FileText, Ghost } from 'lucide-react'
+import { Bell, CheckCircle, SkipForward, Receipt, FileText, Ghost, CalendarClock } from 'lucide-react'
 
 export const metadata = { title: 'Follow-Ups' }
 
@@ -33,12 +33,14 @@ export default async function FollowUpsPage() {
     invoice_reminder: Receipt,
     proposal_followup: FileText,
     ghosted_checkin: Ghost,
+    payment_upcoming: CalendarClock,
   }
 
   const typeLabel = {
     invoice_reminder: 'Invoice Reminder',
     proposal_followup: 'Proposal Follow-Up',
     ghosted_checkin: 'Check-In',
+    payment_upcoming: 'Upcoming Payment',
   }
 
   return (
@@ -96,7 +98,7 @@ export default async function FollowUpsPage() {
                         followUpId={fu.id}
                         clientName={client?.company_name ?? ''}
                         clientEmail={client?.email}
-                        type={fu.type as 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin'}
+                        type={fu.type as 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'}
                         amount={invoice?.amount ?? proposal?.amount}
                         currency={invoice?.currency ?? proposal?.currency}
                         invoiceNumber={invoice?.invoice_number}

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/send'
+import { sendViaGmail } from '@/lib/gmail/send'
 import { logActivity } from '@/lib/actions/activities'
+import type { GmailConnection } from '@/types/database'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -41,15 +43,38 @@ export async function POST(request: Request) {
       )
     }
 
-    const result = await sendEmail({ to, subject, body: emailBody })
+    // Prefer the sender's own Gmail when connected — better deliverability and
+    // replies land in their real inbox. Fall back to the platform sender.
+    const { data: gmailConnection } = await supabase
+      .from('gmail_connections')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle()
+
+    let result: { success: boolean; demo?: boolean; messageId?: string; via?: string }
+    if (gmailConnection) {
+      try {
+        result = await sendViaGmail(supabase, gmailConnection as GmailConnection, {
+          to,
+          subject,
+          body: emailBody,
+        })
+      } catch (gmailError) {
+        console.error('Gmail send failed, falling back to platform sender:', gmailError)
+        result = await sendEmail({ to, subject, body: emailBody })
+      }
+    } else {
+      result = await sendEmail({ to, subject, body: emailBody })
+    }
 
     await logActivity({
       orgId: org.id,
       type: 'email_sent',
       entityType: context?.invoiceId ? 'invoice' : context?.proposalId ? 'proposal' : 'client',
       entityId: context?.invoiceId ?? context?.proposalId ?? context?.clientId,
-      description: `Email sent to ${to}: "${subject}"`,
-      metadata: { to, subject, demo: result.demo ?? false },
+      description: `Email sent to ${to}: "${subject}"${result.via === 'gmail' ? ' via Gmail' : ''}`,
+      metadata: { to, subject, demo: result.demo ?? false, via: result.via ?? 'platform' },
     })
 
     // Update last reminder date on invoice if applicable

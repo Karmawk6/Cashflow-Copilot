@@ -1,4 +1,4 @@
-import type { InvoiceStatus, Priority, ProposalStatus } from '@/types/database'
+import type { InvoiceStatus, Priority, ProposalStatus, RecurringFrequency, RecurringSchedule } from '@/types/database'
 
 // =============================================================================
 // INVOICE PRIORITY LOGIC
@@ -105,6 +105,87 @@ export function clientIsGhosted(
   const now = new Date()
   const daysSinceContact = Math.floor((now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24))
   return daysSinceContact >= dayThreshold
+}
+
+// =============================================================================
+// RECURRING SCHEDULES
+// A due schedule becomes a normal invoice; these helpers are pure date math so
+// both the daily cron and the create-schedule action share one behavior.
+// =============================================================================
+
+/** Parse a YYYY-MM-DD date string as UTC midnight (avoids TZ off-by-one). */
+function parseDateOnly(date: string): Date {
+  const [y, m, d] = date.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d))
+}
+
+function formatDateOnly(date: Date): string {
+  return date.toISOString().split('T')[0]
+}
+
+/**
+ * Next due date after `current`. Monthly-and-longer frequencies re-anchor to
+ * `anchorDay` (clamped to the month's length) so Jan 31 → Feb 28 → Mar 31
+ * instead of drifting to the 28th forever.
+ */
+export function advanceDueDate(current: string, frequency: RecurringFrequency, anchorDay: number): string {
+  const d = parseDateOnly(current)
+
+  if (frequency === 'weekly' || frequency === 'biweekly') {
+    d.setUTCDate(d.getUTCDate() + (frequency === 'weekly' ? 7 : 14))
+    return formatDateOnly(d)
+  }
+
+  const monthsToAdd = frequency === 'monthly' ? 1 : frequency === 'quarterly' ? 3 : 12
+  const targetMonth = d.getUTCMonth() + monthsToAdd
+  const year = d.getUTCFullYear() + Math.floor(targetMonth / 12)
+  const month = targetMonth % 12
+  const daysInTargetMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate()
+  return formatDateOnly(new Date(Date.UTC(year, month, Math.min(anchorDay, daysInTargetMonth))))
+}
+
+/**
+ * Should the cron generate the next invoice for this schedule today?
+ * Invoices are created `remind_days_before` days ahead of the due date so the
+ * client can get a courtesy heads-up referencing a real invoice.
+ */
+export function scheduleShouldGenerate(
+  schedule: Pick<
+    RecurringSchedule,
+    'status' | 'next_due_date' | 'end_date' | 'total_installments' | 'installments_generated' | 'remind_days_before'
+  >,
+  today = new Date()
+): boolean {
+  if (schedule.status !== 'active') return false
+  if (schedule.total_installments !== null && schedule.installments_generated >= schedule.total_installments) {
+    return false
+  }
+  const due = parseDateOnly(schedule.next_due_date)
+  if (schedule.end_date && due > parseDateOnly(schedule.end_date)) return false
+
+  const generateOn = new Date(due)
+  generateOn.setUTCDate(generateOn.getUTCDate() - schedule.remind_days_before)
+  return generateOn.getTime() <= today.getTime()
+}
+
+/** Schedule state after generating one invoice. */
+export function scheduleAfterGeneration(
+  schedule: Pick<
+    RecurringSchedule,
+    'next_due_date' | 'frequency' | 'anchor_day' | 'end_date' | 'total_installments' | 'installments_generated'
+  >
+): { next_due_date: string; installments_generated: number; status: 'active' | 'completed' } {
+  const installments = schedule.installments_generated + 1
+  const nextDue = advanceDueDate(schedule.next_due_date, schedule.frequency, schedule.anchor_day)
+
+  const planDone = schedule.total_installments !== null && installments >= schedule.total_installments
+  const pastEnd = schedule.end_date !== null && parseDateOnly(nextDue) > parseDateOnly(schedule.end_date)
+
+  return {
+    next_due_date: nextDue,
+    installments_generated: installments,
+    status: planDone || pastEnd ? 'completed' : 'active',
+  }
 }
 
 // =============================================================================
