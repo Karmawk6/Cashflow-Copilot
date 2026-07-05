@@ -91,7 +91,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
           <div className="text-xs text-muted-foreground mt-1">Total paid</div>
         </Card>
         <Card className="p-4">
-          <div className="text-2xl font-bold text-orange-600">{formatCurrency(totalInvoiced - totalPaid)}</div>
+          <div className="text-2xl font-bold text-warning">{formatCurrency(totalInvoiced - totalPaid)}</div>
           <div className="text-xs text-muted-foreground mt-1">Outstanding</div>
         </Card>
       </div>

@@ -1,5 +1,6 @@
 import { logout } from '@/lib/actions/auth'
 import { getUser } from '@/lib/supabase/server'
+import { PageTitle } from '@/components/layout/page-title'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -24,7 +25,7 @@ export async function Header() {
 
   return (
     <header className="flex h-14 items-center justify-between border-b bg-card px-6">
-      <div />
+      <PageTitle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">

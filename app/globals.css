@@ -3,54 +3,68 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 47.4% 11.2%;
+  --background: 228 20% 97%;
+  --foreground: 224 39% 10%;
   --card: 0 0% 100%;
-  --card-foreground: 222.2 47.4% 11.2%;
+  --card-foreground: 224 39% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222.2 47.4% 11.2%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
-  --success: 142.1 76.2% 36.3%;
-  --success-foreground: 355.7 100% 97.3%;
-  --warning: 38 92% 50%;
-  --warning-foreground: 30 80% 10%;
+  --popover-foreground: 224 39% 10%;
+  --primary: 229 56% 33%;
+  --primary-foreground: 228 33% 97%;
+  --secondary: 226 22% 93%;
+  --secondary-foreground: 224 39% 14%;
+  --muted: 226 20% 95%;
+  --muted-foreground: 222 14% 42%;
+  --accent: 229 46% 95%;
+  --accent-foreground: 229 56% 28%;
+  --destructive: 4 62% 41%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 222 18% 89%;
+  /* stronger than --border on purpose: input edges are the affordance and
+     must clear WCAG 1.4.11's 3:1 against both background and card */
+  --input: 222 18% 55%;
+  --ring: 229 56% 33%;
+  --radius: 0.625rem;
+  --success: 152 44% 30%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 88% 48%;
+  --warning-foreground: 26 70% 12%;
+  --chart-1: 229 56% 33%;
+  --chart-2: 152 44% 30%;
+  --chart-3: 38 88% 48%;
+  --chart-4: 4 62% 41%;
+  --chart-5: 280 35% 45%;
 }
 
 .dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
-  --success: 142.1 76.2% 36.3%;
-  --warning: 38 92% 50%;
+  --background: 228 24% 8%;
+  --foreground: 220 25% 95%;
+  --card: 228 22% 11%;
+  --card-foreground: 220 25% 95%;
+  --popover: 228 20% 13%;
+  --popover-foreground: 220 25% 95%;
+  --primary: 229 60% 58%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 226 18% 18%;
+  --secondary-foreground: 220 25% 92%;
+  --muted: 226 16% 16%;
+  --muted-foreground: 220 14% 65%;
+  --accent: 229 30% 20%;
+  --accent-foreground: 220 30% 92%;
+  --destructive: 4 65% 50%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 226 18% 20%;
+  --input: 226 20% 48%;
+  --ring: 229 60% 58%;
+  --success: 152 52% 33%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 85% 58%;
+  --warning-foreground: 26 70% 10%;
+  --chart-1: 229 60% 58%;
+  --chart-2: 152 52% 33%;
+  --chart-3: 38 85% 58%;
+  --chart-4: 4 65% 50%;
+  --chart-5: 280 40% 68%;
 }
 
 @theme inline {
@@ -77,11 +91,17 @@
   --color-success-foreground: hsl(var(--success-foreground));
   --color-warning: hsl(var(--warning));
   --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-chart-1: hsl(var(--chart-1));
+  --color-chart-2: hsl(var(--chart-2));
+  --color-chart-3: hsl(var(--chart-3));
+  --color-chart-4: hsl(var(--chart-4));
+  --color-chart-5: hsl(var(--chart-5));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 * {

@@ -68,7 +68,7 @@ export default async function InvoicesPage() {
             </TableHeader>
             <TableBody>
               {(invoices ?? []).map((invoice) => (
-                <TableRow key={invoice.id} className={isOverdue(invoice.due_date) && invoice.status !== 'paid' ? 'bg-red-50/30' : ''}>
+                <TableRow key={invoice.id} className={isOverdue(invoice.due_date) && invoice.status !== 'paid' ? 'bg-destructive/5' : ''}>
                   <TableCell>
                     <div>
                       <div className="font-medium">#{invoice.invoice_number}</div>

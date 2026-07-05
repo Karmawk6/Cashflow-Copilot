@@ -95,6 +95,11 @@ export default async function HomePage() {
           <p className="mt-4 text-sm text-muted-foreground">
             No credit card required. Set up in under two minutes.
           </p>
+          <p className="mx-auto mt-6 max-w-xl text-sm text-muted-foreground">
+            Your money stays yours — we never process or hold client payments, you bring
+            your own payment links. And every follow-up is drafted for you, but{' '}
+            <span className="font-medium text-foreground">you always hit send</span>.
+          </p>
         </section>
 
         <section className="mx-auto max-w-6xl px-6 pb-24">

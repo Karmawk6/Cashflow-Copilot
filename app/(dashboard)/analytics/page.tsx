@@ -118,7 +118,7 @@ export default async function AnalyticsPage() {
           title="Follow-Up Rate"
           value={`${followUpCompletionRate}%`}
           icon={CheckCircle}
-          iconColor="text-amber-500"
+          iconColor="text-warning"
           description={`${completedFollowUps.length} of ${totalFollowUps} completed`}
         />
       </div>
@@ -137,7 +137,7 @@ export default async function AnalyticsPage() {
                 { status: 'overdue', label: 'Overdue', color: 'bg-destructive' },
                 { status: 'partially_paid', label: 'Partially Paid', color: 'bg-warning' },
                 { status: 'draft', label: 'Draft', color: 'bg-muted' },
-                { status: 'cancelled', label: 'Cancelled', color: 'bg-slate-300' },
+                { status: 'cancelled', label: 'Cancelled', color: 'bg-muted-foreground/30' },
               ].map(({ status, label, color }) => {
                 const count = statusCounts[status] ?? 0
                 const total = (invoices ?? []).length

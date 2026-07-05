@@ -82,31 +82,31 @@ export default async function DashboardPage() {
           title="Unpaid Invoices"
           value={formatCurrency(summary.totalUnpaidAmount)}
           icon={DollarSign}
-          iconColor="text-blue-500"
+          iconColor="text-primary"
           description={`${(invoices ?? []).filter(i => i.status !== 'paid' && i.status !== 'cancelled' && i.status !== 'draft').length} outstanding`}
         />
         <StatCard
           title="Overdue Amount"
           value={formatCurrency(summary.totalOverdueAmount)}
           icon={AlertTriangle}
-          iconColor="text-red-500"
+          iconColor="text-destructive"
           description={`${summary.overdueCount} invoice${summary.overdueCount !== 1 ? 's' : ''} overdue`}
-          valueClassName={summary.totalOverdueAmount > 0 ? 'text-red-600' : undefined}
+          valueClassName={summary.totalOverdueAmount > 0 ? 'text-destructive' : undefined}
         />
         <StatCard
           title="Stale Proposals"
           value={formatCurrency(summary.staleProposalsAmount)}
           icon={FileText}
-          iconColor="text-amber-500"
+          iconColor="text-warning"
           description={`${summary.staleProposalsCount} need follow-up`}
         />
         <StatCard
           title="Money at Risk"
           value={formatCurrency(summary.moneyAtRiskThisWeek)}
           icon={TrendingDown}
-          iconColor="text-orange-500"
+          iconColor="text-warning"
           description="This week"
-          valueClassName={summary.moneyAtRiskThisWeek > 0 ? 'text-orange-600' : undefined}
+          valueClassName={summary.moneyAtRiskThisWeek > 0 ? 'text-warning' : undefined}
         />
       </div>
 
@@ -114,8 +114,8 @@ export default async function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-purple-50">
-              <Ghost className="h-5 w-5 text-purple-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-chart-5/10">
+              <Ghost className="h-5 w-5 text-chart-5" />
             </div>
             <div>
               <div className="text-2xl font-bold">{summary.ghostedLeadsCount}</div>
@@ -125,8 +125,8 @@ export default async function DashboardPage() {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-red-50">
-              <Bell className="h-5 w-5 text-red-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10">
+              <Bell className="h-5 w-5 text-destructive" />
             </div>
             <div>
               <div className="text-2xl font-bold">{summary.followUpsDueToday}</div>
@@ -136,8 +136,8 @@ export default async function DashboardPage() {
         </Card>
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-50">
-              <DollarSign className="h-5 w-5 text-green-500" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-success/10">
+              <DollarSign className="h-5 w-5 text-success" />
             </div>
             <div>
               <div className="text-2xl font-bold">{(clients ?? []).length}</div>
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
                   className="flex items-center justify-between rounded-lg border p-3 text-sm hover:bg-accent transition-colors"
                 >
                   <div className="flex items-center gap-3">
-                    <Icon className={`h-4 w-4 ${rec.priority === 'high' ? 'text-red-500' : 'text-amber-500'}`} />
+                    <Icon className={`h-4 w-4 ${rec.priority === 'high' ? 'text-destructive' : 'text-warning'}`} />
                     <span>{rec.label}</span>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />

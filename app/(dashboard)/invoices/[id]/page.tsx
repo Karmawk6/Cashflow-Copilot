@@ -99,7 +99,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <div className="text-xs text-muted-foreground mt-1">Amount paid</div>
         </Card>
         <Card className="p-4">
-          <div className={`text-2xl font-bold tabular-nums ${invoice.amount - invoice.amount_paid > 0 ? 'text-orange-600' : 'text-success'}`}>
+          <div className={`text-2xl font-bold tabular-nums ${invoice.amount - invoice.amount_paid > 0 ? 'text-warning' : 'text-success'}`}>
             {formatCurrency(invoice.amount - invoice.amount_paid, invoice.currency)}
           </div>
           <div className="text-xs text-muted-foreground mt-1">Outstanding</div>
