@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database'
@@ -28,15 +29,17 @@ export async function createClient() {
   )
 }
 
-export async function getUser() {
+// cache() dedupes these per request — layout, header, and page all call them,
+// which previously meant 3-6 Supabase round trips per page view.
+export const getUser = cache(async () => {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
   return user
-}
+})
 
-export async function getOrganization() {
+export const getOrganization = cache(async () => {
   const supabase = await createClient()
   const user = await getUser()
   if (!user) return null
@@ -48,4 +51,4 @@ export async function getOrganization() {
     .single()
 
   return data
-}
+})

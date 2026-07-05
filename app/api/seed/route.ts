@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 
-// Seed demo data for testing. Only works in development or demo mode.
-export async function POST() {
-  if (process.env.NODE_ENV === 'production' && process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') {
-    return NextResponse.json({ error: 'Seed disabled in production' }, { status: 403 })
-  }
+// Demo data is org-scoped, so any authenticated account may load it in any
+// environment. Clients are tagged 'demo' and activities carry metadata.demo
+// so DELETE can remove exactly what POST created.
 
+export async function POST() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -14,16 +13,30 @@ export async function POST() {
   const org = await getOrganization()
   if (!org) return NextResponse.json({ error: 'No organization' }, { status: 400 })
 
+  const { data: existing } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('organization_id', org.id)
+    .contains('tags', ['demo'])
+    .limit(1)
+
+  if (existing && existing.length > 0) {
+    return NextResponse.json(
+      { error: 'Demo data is already loaded. Clear it before loading again.' },
+      { status: 409 }
+    )
+  }
+
   const now = new Date()
   const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000).toISOString().split('T')[0]
 
   // Create demo clients
   const { data: clients } = await supabase.from('clients').insert([
-    { organization_id: org.id, company_name: 'Meridian Growth Partners', contact_name: 'Sarah Chen', email: 'sarah@meridian.example.com', status: 'active', last_contact_date: daysAgo(2) },
-    { organization_id: org.id, company_name: 'BlueStone Digital', contact_name: 'Marcus Reid', email: 'marcus@bluestone.example.com', status: 'active', last_contact_date: daysAgo(12) },
-    { organization_id: org.id, company_name: 'Vertex Solutions LLC', contact_name: 'Priya Patel', email: 'priya@vertex.example.com', status: 'ghosted', last_contact_date: daysAgo(18) },
-    { organization_id: org.id, company_name: 'Harlow & Associates', contact_name: 'Tom Harlow', email: 'tom@harlow.example.com', status: 'active', last_contact_date: daysAgo(5) },
-    { organization_id: org.id, company_name: 'Cascade Media Group', contact_name: 'Lisa Park', email: 'lisa@cascade.example.com', status: 'prospect', last_contact_date: daysAgo(8) },
+    { organization_id: org.id, company_name: 'Meridian Growth Partners', contact_name: 'Sarah Chen', email: 'sarah@meridian.example.com', status: 'active', last_contact_date: daysAgo(2), tags: ['demo'] },
+    { organization_id: org.id, company_name: 'BlueStone Digital', contact_name: 'Marcus Reid', email: 'marcus@bluestone.example.com', status: 'active', last_contact_date: daysAgo(12), tags: ['demo'] },
+    { organization_id: org.id, company_name: 'Vertex Solutions LLC', contact_name: 'Priya Patel', email: 'priya@vertex.example.com', status: 'ghosted', last_contact_date: daysAgo(18), tags: ['demo'] },
+    { organization_id: org.id, company_name: 'Harlow & Associates', contact_name: 'Tom Harlow', email: 'tom@harlow.example.com', status: 'active', last_contact_date: daysAgo(5), tags: ['demo'] },
+    { organization_id: org.id, company_name: 'Cascade Media Group', contact_name: 'Lisa Park', email: 'lisa@cascade.example.com', status: 'prospect', last_contact_date: daysAgo(8), tags: ['demo'] },
   ]).select()
 
   if (!clients) return NextResponse.json({ error: 'Failed to create clients' }, { status: 500 })
@@ -96,11 +109,53 @@ export async function POST() {
 
   // Log some activity
   await supabase.from('activities').insert([
-    { organization_id: org.id, user_id: user.id, type: 'invoice_created', entity_type: 'invoice', description: 'Created invoice INV-2025-001 for Meridian Growth Partners', metadata: { amount: 12500 } },
-    { organization_id: org.id, user_id: user.id, type: 'proposal_won', entity_type: 'proposal', description: 'Won proposal: Content Strategy Audit (Harlow & Associates)', metadata: { amount: 6500 } },
-    { organization_id: org.id, user_id: user.id, type: 'invoice_paid', entity_type: 'invoice', description: 'Invoice INV-2025-004 marked paid — $3,200', metadata: { amount: 3200 } },
-    { organization_id: org.id, user_id: user.id, type: 'email_drafted', entity_type: 'invoice', description: 'Drafted follow-up for INV-2025-001 (Meridian)', metadata: {} },
+    { organization_id: org.id, user_id: user.id, type: 'invoice_created', entity_type: 'invoice', description: 'Created invoice INV-2025-001 for Meridian Growth Partners', metadata: { amount: 12500, demo: true } },
+    { organization_id: org.id, user_id: user.id, type: 'proposal_won', entity_type: 'proposal', description: 'Won proposal: Content Strategy Audit (Harlow & Associates)', metadata: { amount: 6500, demo: true } },
+    { organization_id: org.id, user_id: user.id, type: 'invoice_paid', entity_type: 'invoice', description: 'Invoice INV-2025-004 marked paid — $3,200', metadata: { amount: 3200, demo: true } },
+    { organization_id: org.id, user_id: user.id, type: 'email_drafted', entity_type: 'invoice', description: 'Drafted follow-up for INV-2025-001 (Meridian)', metadata: { demo: true } },
   ])
 
   return NextResponse.json({ ok: true, message: 'Demo data seeded successfully' })
+}
+
+export async function DELETE() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const org = await getOrganization()
+  if (!org) return NextResponse.json({ error: 'No organization' }, { status: 400 })
+
+  const { data: demoClients } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('organization_id', org.id)
+    .contains('tags', ['demo'])
+
+  const clientIds = (demoClients ?? []).map((c) => c.id)
+
+  if (clientIds.length > 0) {
+    const [{ data: invoices }, { data: proposals }] = await Promise.all([
+      supabase.from('invoices').select('id').eq('organization_id', org.id).in('client_id', clientIds),
+      supabase.from('proposals').select('id').eq('organization_id', org.id).in('client_id', clientIds),
+    ])
+    const invoiceIds = (invoices ?? []).map((i) => i.id)
+    const proposalIds = (proposals ?? []).map((p) => p.id)
+
+    // follow_up_events FKs are ON DELETE SET NULL, so remove them explicitly
+    // before the client delete cascades through invoices/proposals.
+    await supabase.from('follow_up_events').delete().eq('organization_id', org.id).in('client_id', clientIds)
+    if (invoiceIds.length > 0) {
+      await supabase.from('follow_up_events').delete().eq('organization_id', org.id).in('invoice_id', invoiceIds)
+    }
+    if (proposalIds.length > 0) {
+      await supabase.from('follow_up_events').delete().eq('organization_id', org.id).in('proposal_id', proposalIds)
+    }
+
+    await supabase.from('clients').delete().eq('organization_id', org.id).in('id', clientIds)
+  }
+
+  await supabase.from('activities').delete().eq('organization_id', org.id).contains('metadata', { demo: true })
+
+  return NextResponse.json({ ok: true, removedClients: clientIds.length })
 }

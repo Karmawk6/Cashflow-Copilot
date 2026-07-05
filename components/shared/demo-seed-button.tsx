@@ -1,25 +1,28 @@
 'use client'
 
 import { useState } from 'react'
-import { Database } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Database, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from 'sonner'
 
 export function DemoSeedButton() {
-  const [loading, setLoading] = useState(false)
+  const [pending, setPending] = useState<'seed' | 'clear' | null>(null)
+  const router = useRouter()
 
-  const seed = async () => {
-    setLoading(true)
+  const run = async (action: 'seed' | 'clear') => {
+    setPending(action)
     try {
-      const res = await fetch('/api/seed', { method: 'POST' })
+      const res = await fetch('/api/seed', { method: action === 'seed' ? 'POST' : 'DELETE' })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error)
-      toast.success('Demo data loaded! Refresh the dashboard.')
+      toast.success(action === 'seed' ? 'Demo data loaded!' : 'Demo data cleared.')
+      router.refresh()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to seed demo data')
+      toast.error(err instanceof Error ? err.message : `Failed to ${action} demo data`)
     } finally {
-      setLoading(false)
+      setPending(null)
     }
   }
 
@@ -28,15 +31,20 @@ export function DemoSeedButton() {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Database className="h-4 w-4" />
-          Load Demo Data
+          Demo Data
         </CardTitle>
         <CardDescription>
-          Populate your account with sample clients, invoices, and proposals to explore the app.
+          Populate your workspace with sample clients, invoices, and proposals to explore the
+          app — then clear them with one click. Only affects your own workspace.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Button variant="outline" onClick={seed} disabled={loading}>
-          {loading ? 'Loading...' : 'Load demo data'}
+      <CardContent className="flex gap-3">
+        <Button variant="outline" onClick={() => run('seed')} disabled={pending !== null}>
+          {pending === 'seed' ? 'Loading...' : 'Load demo data'}
+        </Button>
+        <Button variant="ghost" onClick={() => run('clear')} disabled={pending !== null} className="text-destructive hover:text-destructive">
+          <Trash2 className="mr-1.5 h-4 w-4" />
+          {pending === 'clear' ? 'Clearing...' : 'Clear demo data'}
         </Button>
       </CardContent>
     </Card>

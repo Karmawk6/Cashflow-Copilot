@@ -11,9 +11,10 @@ import {
   Mail,
   BarChart3,
   Settings,
-  TrendingUp,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { logout } from '@/lib/actions/auth'
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -68,11 +69,16 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t p-3">
-        <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
-          <TrendingUp className="h-4 w-4 text-success" />
-          <span className="text-xs text-muted-foreground">Track. Follow up. Get paid.</span>
-        </div>
+      <div className="border-t p-2">
+        <form action={logout}>
+          <button
+            type="submit"
+            className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            Sign out
+          </button>
+        </form>
       </div>
     </div>
   )

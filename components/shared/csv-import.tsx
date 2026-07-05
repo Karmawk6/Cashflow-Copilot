@@ -8,10 +8,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 
+const skipReasonLabels: Record<string, string> = {
+  no_company_column:
+    'No company name found. Accepted column names: company_name, company, business, organization, client, account, or name.',
+  missing_invoice_fields:
+    'Missing a required invoice field — needs an invoice number, amount, and due date.',
+  missing_proposal_fields: 'Missing a required proposal field — needs a title and amount.',
+  client_not_found:
+    'The company on this row is not in your Clients yet. Import or add clients first, with names that match exactly.',
+}
+
 export function CsvImport() {
   const [type, setType] = useState<'clients' | 'invoices' | 'proposals'>('clients')
   const [uploading, setUploading] = useState(false)
-  const [result, setResult] = useState<{ imported: number; skipped: number; failed: number; total: number } | null>(null)
+  const [result, setResult] = useState<{
+    imported: number
+    skipped: number
+    failed: number
+    total: number
+    skipReasons?: Record<string, number>
+    detectedHeaders?: string[]
+  } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +49,8 @@ export function CsvImport() {
       if (!res.ok) throw new Error(data.error)
 
       setResult(data)
-      toast.success(`Imported ${data.imported} ${type}`)
+      if (data.imported > 0) toast.success(`Imported ${data.imported} ${type}`)
+      else toast.warning('Nothing imported — see the details below for why rows were skipped')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Import failed')
     } finally {
@@ -131,6 +149,24 @@ export function CsvImport() {
                 <div className="text-xs text-muted-foreground">Failed</div>
               </div>
             </div>
+            {result.skipped > 0 && result.skipReasons && Object.keys(result.skipReasons).length > 0 && (
+              <div className="space-y-1.5 rounded-md bg-warning/10 p-3 text-xs">
+                <p className="font-medium">Why rows were skipped:</p>
+                <ul className="list-disc space-y-1 pl-4 text-muted-foreground">
+                  {Object.entries(result.skipReasons).map(([reason, count]) => (
+                    <li key={reason}>
+                      <span className="font-medium text-foreground">{count} row{count === 1 ? '' : 's'}:</span>{' '}
+                      {skipReasonLabels[reason] ?? reason}
+                    </li>
+                  ))}
+                </ul>
+                {result.detectedHeaders && result.detectedHeaders.length > 0 && (
+                  <p className="pt-1 text-muted-foreground">
+                    Columns found in your file: <span className="font-mono">{result.detectedHeaders.join(', ')}</span>
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </CardContent>

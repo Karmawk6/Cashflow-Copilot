@@ -45,13 +45,13 @@ export async function Header() {
             <a href="/settings">Settings</a>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <form action={logout}>
-              <button type="submit" className="w-full text-left text-destructive">
+          <form action={logout}>
+            <DropdownMenuItem asChild>
+              <button type="submit" className="w-full cursor-pointer text-destructive">
                 Sign out
               </button>
-            </form>
-          </DropdownMenuItem>
+            </DropdownMenuItem>
+          </form>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>

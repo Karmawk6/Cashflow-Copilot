@@ -12,6 +12,19 @@ function escapeLikePattern(term: string): string {
   return term.replace(/[\\%_]/g, '\\$&')
 }
 
+// Real-world CSVs name the company column many ways; accept the common ones.
+function companyFrom(row: Record<string, string>): string {
+  return (
+    row.company_name || row.company || row.business_name || row.business ||
+    row.organization || row.organisation || row.client_name || row.client ||
+    row.account || row.name || ''
+  ).trim()
+}
+
+function amountFrom(row: Record<string, string>): string {
+  return row.amount || row.total || row.value || row.price || ''
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -33,7 +46,7 @@ export async function POST(request: Request) {
   }
 
   const text = await file.text()
-  const { data: rows, errors } = Papa.parse(text, {
+  const { data: rows, errors, meta } = Papa.parse(text, {
     header: true,
     skipEmptyLines: true,
     transformHeader: (h) => h.trim().toLowerCase().replace(/\s+/g, '_'),
@@ -50,17 +63,23 @@ export async function POST(request: Request) {
   let imported = 0
   let skipped = 0
   const failedRows: number[] = []
+  const skipReasons: Record<string, number> = {}
+  const skip = (reason: string) => {
+    skipped++
+    skipReasons[reason] = (skipReasons[reason] ?? 0) + 1
+  }
 
   for (let i = 0; i < (rows as Record<string, string>[]).length; i++) {
     const row = (rows as Record<string, string>[])[i]
 
     try {
       if (type === 'clients') {
-        if (!row.company_name) { skipped++; continue }
+        const companyName = companyFrom(row)
+        if (!companyName) { skip('no_company_column'); continue }
         const { error } = await supabase.from('clients').insert({
           organization_id: org.id,
-          company_name: row.company_name,
-          contact_name: row.contact_name || row.name || null,
+          company_name: companyName,
+          contact_name: row.contact_name || row.contact || (row.name && row.name.trim() !== companyName ? row.name : null) || null,
           email: row.email || null,
           phone: row.phone || null,
           website: row.website || null,
@@ -71,30 +90,33 @@ export async function POST(request: Request) {
         imported++
 
       } else if (type === 'invoices') {
-        // Try to find client by company name or email
-        if (!row.invoice_number || !row.amount || !row.due_date) { skipped++; continue }
+        const invoiceNumber = row.invoice_number || row.invoice_no || row.invoice || row.number
+        const amount = amountFrom(row)
+        const dueDate = row.due_date || row.due
+        if (!invoiceNumber || !amount || !dueDate) { skip('missing_invoice_fields'); continue }
 
+        const company = companyFrom(row)
         let clientId: string | null = null
-        if (row.company_name || row.client_name || row.client) {
+        if (company) {
           const { data: client } = await supabase
             .from('clients')
             .select('id')
             .eq('organization_id', org.id)
-            .ilike('company_name', escapeLikePattern((row.company_name || row.client_name || row.client).trim()))
+            .ilike('company_name', escapeLikePattern(company))
             .single()
           clientId = client?.id ?? null
         }
-        if (!clientId) { skipped++; continue }
+        if (!clientId) { skip('client_not_found'); continue }
 
         const { error } = await supabase.from('invoices').insert({
           organization_id: org.id,
           client_id: clientId,
-          invoice_number: row.invoice_number,
+          invoice_number: invoiceNumber,
           title: row.title || row.description || null,
-          amount: parseFloat(row.amount.replace(/[$,]/g, '')) || 0,
+          amount: parseFloat(amount.replace(/[$,]/g, '')) || 0,
           amount_paid: parseFloat((row.amount_paid || row.paid || '0').replace(/[$,]/g, '')) || 0,
           issue_date: row.issue_date || row.date || new Date().toISOString().split('T')[0],
-          due_date: row.due_date,
+          due_date: dueDate,
           status: (['draft','sent','paid','overdue','partially_paid','cancelled'].includes(row.status) ? row.status : 'sent') as 'draft' | 'sent' | 'paid' | 'overdue' | 'partially_paid' | 'cancelled',
           notes: row.notes || null,
         })
@@ -102,26 +124,29 @@ export async function POST(request: Request) {
         imported++
 
       } else if (type === 'proposals') {
-        if (!row.title || !row.amount) { skipped++; continue }
+        const title = row.title || row.proposal_title || row.description
+        const amount = amountFrom(row)
+        if (!title || !amount) { skip('missing_proposal_fields'); continue }
 
+        const company = companyFrom(row)
         let clientId: string | null = null
-        if (row.company_name || row.client_name || row.client) {
+        if (company) {
           const { data: client } = await supabase
             .from('clients')
             .select('id')
             .eq('organization_id', org.id)
-            .ilike('company_name', escapeLikePattern((row.company_name || row.client_name || row.client).trim()))
+            .ilike('company_name', escapeLikePattern(company))
             .single()
           clientId = client?.id ?? null
         }
-        if (!clientId) { skipped++; continue }
+        if (!clientId) { skip('client_not_found'); continue }
 
         const { error } = await supabase.from('proposals').insert({
           organization_id: org.id,
           client_id: clientId,
-          title: row.title,
+          title,
           proposal_number: row.proposal_number || null,
-          amount: parseFloat(row.amount.replace(/[$,]/g, '')) || 0,
+          amount: parseFloat(amount.replace(/[$,]/g, '')) || 0,
           sent_date: row.sent_date || row.date || null,
           expiration_date: row.expiration_date || row.expires || null,
           status: (['draft','sent','viewed','follow_up_due','won','lost'].includes(row.status) ? row.status : 'sent') as 'draft' | 'sent' | 'viewed' | 'follow_up_due' | 'won' | 'lost',
@@ -141,5 +166,7 @@ export async function POST(request: Request) {
     failed: failedRows.length,
     failedRows: failedRows.slice(0, 10),
     total: (rows as unknown[]).length,
+    skipReasons,
+    detectedHeaders: meta.fields ?? [],
   })
 }
