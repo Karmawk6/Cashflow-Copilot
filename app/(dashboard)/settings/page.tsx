@@ -59,11 +59,13 @@ export default async function SettingsPage() {
         org={org}
         followUpRules={followUpRules ?? []}
       />
-      {org && (
+      {/* Gmail stays hidden unless this user already connected one — the
+          platform sender (Resend + reply-to) is the default sending path. */}
+      {org && gmailConnection && (
         <Suspense>
           <GmailConnectionCard
             configured={gmailOauthConfigured()}
-            connection={gmailConnection as { gmail_address: string; status: 'active' | 'error' } | null}
+            connection={gmailConnection as { gmail_address: string; status: 'active' | 'error' }}
           />
         </Suspense>
       )}

@@ -14,6 +14,17 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
+    // Sign-off name: whatever the caller sent, else the member's own name —
+    // "The team" is a last resort, not a default.
+    if (!body.senderName) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .maybeSingle()
+      if (profile?.full_name) body.senderName = profile.full_name
+    }
+
     // Template mode: instant, predictable, uses the org's saved wording.
     // AI mode remains for when the user wants something bespoke.
     if (body.source === 'template') {
