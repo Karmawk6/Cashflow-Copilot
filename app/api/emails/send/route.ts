@@ -62,10 +62,10 @@ export async function POST(request: Request) {
         })
       } catch (gmailError) {
         console.error('Gmail send failed, falling back to platform sender:', gmailError)
-        result = await sendEmail({ to, subject, body: emailBody })
+        result = await sendEmail({ to, subject, body: emailBody, replyTo: user.email })
       }
     } else {
-      result = await sendEmail({ to, subject, body: emailBody })
+      result = await sendEmail({ to, subject, body: emailBody, replyTo: user.email })
     }
 
     await logActivity({

@@ -5,6 +5,7 @@ interface SendEmailParams {
   subject: string
   body: string
   from?: string
+  replyTo?: string
 }
 
 function escapeHtml(text: string): string {
@@ -15,7 +16,7 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;')
 }
 
-export async function sendEmail({ to, subject, body, from }: SendEmailParams) {
+export async function sendEmail({ to, subject, body, from, replyTo }: SendEmailParams) {
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true'
 
   if (isDemoMode || !process.env.RESEND_API_KEY) {
@@ -26,14 +27,17 @@ export async function sendEmail({ to, subject, body, from }: SendEmailParams) {
   const resend = new Resend(process.env.RESEND_API_KEY)
   const fromAddress = from ?? process.env.RESEND_FROM_EMAIL ?? 'noreply@cashflowcopilot.com'
 
+  // Reply-To the member who sent it, so client replies reach a human inbox
+  // even though the email goes out from the platform domain.
   const { data, error } = await resend.emails.send({
     from: fromAddress,
     to,
     subject,
+    replyTo: replyTo ? [replyTo] : undefined,
     text: body,
     html: escapeHtml(body).replace(/\n/g, '<br>'),
   })
 
   if (error) throw new Error(error.message)
-  return { success: true, messageId: data?.id }
+  return { success: true, messageId: data?.id, via: 'platform' }
 }
