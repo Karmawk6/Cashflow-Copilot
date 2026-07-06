@@ -91,7 +91,7 @@ export function AiEmailModal({ open, onClose, context }: AiEmailModalProps) {
       // Be honest about what actually happened — a demo "send" is not a send.
       if (data.demo) {
         toast.warning(
-          'No email sender is connected, so nothing was delivered. Connect Gmail in Settings to send for real.',
+          'Email sending is not set up yet, so nothing was delivered. The draft was recorded — finish email setup to send for real.',
           { duration: 8000 }
         )
       } else if (data.via === 'gmail') {
