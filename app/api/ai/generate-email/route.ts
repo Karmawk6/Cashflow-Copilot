@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getOrganization } from '@/lib/supabase/server'
 import { generateEmail } from '@/lib/ai/generate-email'
+import { fillTemplate, pickTemplate } from '@/lib/email/templates'
 
 export async function POST(request: Request) {
   const supabase = await createClient()
@@ -12,10 +13,33 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
+
+    // Template mode: instant, predictable, uses the org's saved wording.
+    // AI mode remains for when the user wants something bespoke.
+    if (body.source === 'template') {
+      const org = await getOrganization()
+      if (!org) return NextResponse.json({ error: 'No organization' }, { status: 403 })
+
+      const template = await pickTemplate(supabase, org.id, body.type, body.tone ?? 'professional')
+      if (!template) {
+        return NextResponse.json(
+          { error: 'No template exists for this situation yet — add one under Templates' },
+          { status: 404 }
+        )
+      }
+
+      return NextResponse.json({
+        subject: fillTemplate(template.subject, body),
+        body: fillTemplate(template.body, body),
+        source: 'template',
+        templateName: template.name,
+      })
+    }
+
     const result = await generateEmail(body)
-    return NextResponse.json(result)
+    return NextResponse.json({ ...result, source: 'ai' })
   } catch (error) {
-    console.error('AI generation error:', error)
+    console.error('Email draft error:', error)
     return NextResponse.json({ error: 'Failed to generate email' }, { status: 500 })
   }
 }

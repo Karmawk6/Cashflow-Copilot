@@ -11,6 +11,7 @@ import type { EmailTemplateType } from '@/types/database'
 interface FollowUpActionsProps {
   followUpId: string
   clientName: string
+  contactName?: string | null
   clientEmail?: string | null
   type: 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'
   amount?: number
@@ -31,6 +32,7 @@ const typeToEmailType: Record<string, EmailTemplateType> = {
 export function FollowUpActions({
   followUpId,
   clientName,
+  contactName,
   clientEmail,
   type,
   amount,
@@ -77,6 +79,7 @@ export function FollowUpActions({
         context={{
           type: typeToEmailType[type],
           clientName,
+          contactName,
           clientEmail,
           amount,
           currency,

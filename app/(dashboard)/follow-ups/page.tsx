@@ -97,6 +97,7 @@ export default async function FollowUpsPage() {
                       <FollowUpActions
                         followUpId={fu.id}
                         clientName={client?.company_name ?? ''}
+                        contactName={client?.contact_name}
                         clientEmail={client?.email}
                         type={fu.type as 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'}
                         amount={invoice?.amount ?? proposal?.amount}

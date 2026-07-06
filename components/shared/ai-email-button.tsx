@@ -9,6 +9,7 @@ import type { EmailTemplateType } from '@/types/database'
 interface AiEmailButtonProps {
   type: EmailTemplateType
   clientName: string
+  contactName?: string | null
   clientEmail?: string | null
   amount?: number
   currency?: string
