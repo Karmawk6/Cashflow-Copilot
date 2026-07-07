@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization } from '@/lib/supabase/server'
+import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 import { formatCurrency, formatDate, daysAgo, isOverdue } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { InvoiceStatusBadge } from '@/components/shared/status-badge'
@@ -23,6 +24,9 @@ export default async function InvoicesPage({
   const supabase = await createClient()
   const org = await getOrganization()
   if (!org) redirect('/onboarding')
+
+  // Bring overdue status & priorities up to date before fetching what we show
+  await syncOrgWorkState(supabase, org.id)
 
   const [{ data: invoices }, { data: schedules }] = await Promise.all([
     supabase

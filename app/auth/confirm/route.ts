@@ -24,10 +24,18 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash })
     if (!error) redirect(next)
-  } else if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) redirect(next)
+    redirect('/login?error=confirmation_failed')
   }
 
-  redirect('/login?error=confirmation_failed')
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) redirect(next)
+    // Supabase only issues a code after IT verified the email — the exchange
+    // fails on a different device (missing PKCE cookie), but the address IS
+    // confirmed, so send them to sign in rather than a scary error.
+    redirect('/login?notice=email_confirmed')
+  }
+
+  // No recognizable params (crawler, truncated link) — just go sign in.
+  redirect('/login')
 }

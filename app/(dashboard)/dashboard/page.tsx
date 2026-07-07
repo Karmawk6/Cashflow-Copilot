@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getOrganization } from '@/lib/supabase/server'
+import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 import { computeDashboardSummary } from '@/lib/follow-up-engine/engine'
 import { formatCurrency, formatDate, daysAgo } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +26,9 @@ export default async function DashboardPage() {
   const supabase = await createClient()
   const org = await getOrganization()
   if (!org) redirect('/onboarding')
+
+  // Bring overdue status & priorities up to date before fetching what we show
+  await syncOrgWorkState(supabase, org.id)
 
   const [
     { data: invoices },

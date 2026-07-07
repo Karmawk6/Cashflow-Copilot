@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { logActivity } from './activities'
+import { invoiceNeedsFollowUp, proposalNeedsFollowUp } from '@/lib/follow-up-engine/engine'
+import { syncInvoiceStatusAndPriority, syncProposalStatusAndPriority } from '@/lib/follow-up-engine/sync'
 import type { FollowUpEventStatus, FollowUpEventType, Priority } from '@/types/database'
 
 export async function updateFollowUpStatusAction(id: string, status: FollowUpEventStatus) {
@@ -74,8 +76,6 @@ export async function runFollowUpEngineAction() {
       .in('status', ['sent', 'viewed', 'follow_up_due']),
   ])
 
-  const { computeInvoicePriority, invoiceNeedsFollowUp, proposalNeedsFollowUp, computeProposalPriority } = await import('@/lib/follow-up-engine/engine')
-
   const now = new Date().toISOString()
   const eventsToCreate: Array<{
     organization_id: string
@@ -89,6 +89,10 @@ export async function runFollowUpEngineAction() {
   }> = []
 
   for (const invoice of invoices ?? []) {
+    // Same shared sync as the cron — keeps status fresh and respects a
+    // manually pinned priority instead of recomputing it blind.
+    const { priority } = await syncInvoiceStatusAndPriority(supabase, invoice)
+
     if (invoiceNeedsFollowUp(invoice.due_date, invoice.status, invoice.last_reminder_date)) {
       // Check if there's already a pending event for this invoice
       const { data: existing } = await supabase
@@ -105,7 +109,7 @@ export async function runFollowUpEngineAction() {
           invoice_id: invoice.id,
           type: 'invoice_reminder',
           status: 'pending',
-          priority: computeInvoicePriority(invoice.due_date, invoice.status),
+          priority,
           due_date: now,
         })
       }
@@ -113,6 +117,8 @@ export async function runFollowUpEngineAction() {
   }
 
   for (const proposal of proposals ?? []) {
+    const { priority } = await syncProposalStatusAndPriority(supabase, proposal)
+
     if (proposalNeedsFollowUp(proposal.sent_date, proposal.status, proposal.last_follow_up_date, proposal.follow_up_cadence_days)) {
       const { data: existing } = await supabase
         .from('follow_up_events')
@@ -128,7 +134,7 @@ export async function runFollowUpEngineAction() {
           proposal_id: proposal.id,
           type: 'proposal_followup',
           status: 'pending',
-          priority: computeProposalPriority(proposal.sent_date, proposal.status),
+          priority,
           due_date: now,
         })
       }

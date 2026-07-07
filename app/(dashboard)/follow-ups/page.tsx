@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient, getOrganization } from '@/lib/supabase/server'
-import { formatCurrency, formatDate } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
+import { priorityRank } from '@/lib/follow-up-engine/engine'
+import { formatCurrency } from '@/lib/utils'
+import { Card, CardContent } from '@/components/ui/card'
 import { EmptyState } from '@/components/shared/empty-state'
 import { FollowUpActions } from '@/components/follow-ups/follow-up-actions'
-import { Bell, CheckCircle, SkipForward, Receipt, FileText, Ghost, CalendarClock } from 'lucide-react'
+import { Bell, Receipt, FileText, Ghost, CalendarClock } from 'lucide-react'
 
 export const metadata = { title: 'Follow-Ups' }
 
@@ -14,6 +14,9 @@ export default async function FollowUpsPage() {
   const supabase = await createClient()
   const org = await getOrganization()
   if (!org) redirect('/onboarding')
+
+  // Bring overdue status & priorities up to date before fetching what we show
+  await syncOrgWorkState(supabase, org.id)
 
   const { data } = await supabase
     .from('follow_up_events')
@@ -30,10 +33,7 @@ export default async function FollowUpsPage() {
   // priority is a text column, so SQL ordering is alphabetical (critical
   // would sort last) — rank it here instead. Stable sort keeps the
   // due-date order within each priority level.
-  const priorityRank = { critical: 3, high: 2, medium: 1, low: 0 } as const
-  const followUps = (data ?? []).sort(
-    (a, b) => (priorityRank[b.priority as keyof typeof priorityRank] ?? 0) - (priorityRank[a.priority as keyof typeof priorityRank] ?? 0)
-  )
+  const followUps = (data ?? []).sort((a, b) => priorityRank(b.priority) - priorityRank(a.priority))
 
   const typeIcon = {
     invoice_reminder: Receipt,
@@ -55,12 +55,12 @@ export default async function FollowUpsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Follow-Ups</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {followUps?.length ?? 0} pending follow-up{(followUps?.length ?? 0) !== 1 ? 's' : ''}
+            {followUps.length} pending follow-up{followUps.length !== 1 ? 's' : ''}
           </p>
         </div>
       </div>
 
-      {!followUps || followUps.length === 0 ? (
+      {followUps.length === 0 ? (
         <EmptyState
           icon={Bell}
           title="All caught up!"

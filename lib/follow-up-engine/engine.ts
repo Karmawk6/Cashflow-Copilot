@@ -1,6 +1,29 @@
 import type { InvoiceStatus, Priority, ProposalStatus, RecurringFrequency, RecurringSchedule } from '@/types/database'
 
 // =============================================================================
+// PRIORITY ORDERING
+// Single source of truth for how priorities rank — TEXT columns sort
+// alphabetically in SQL (critical < high < low < medium), so any list that
+// wants "critical first" must rank through here.
+// =============================================================================
+export const PRIORITY_ORDER: Priority[] = ['low', 'medium', 'high', 'critical']
+
+export function priorityRank(priority: Priority): number {
+  return PRIORITY_ORDER.indexOf(priority)
+}
+
+/**
+ * Date-only "past due" check: an invoice due today is NOT overdue — overdue
+ * starts the day after the due date. (Comparing new Date(dueDate) < now would
+ * flip an invoice to overdue at 00:00 UTC on its due date, while
+ * computeInvoicePriority still reports 'low' — an inconsistent state.)
+ */
+export function isPastDue(dueDate: string | null, today = new Date()): boolean {
+  if (!dueDate) return false
+  return dueDate < today.toISOString().split('T')[0]
+}
+
+// =============================================================================
 // INVOICE PRIORITY LOGIC
 // overdue 1–7 days = medium, 8–21 days = high, >21 days = critical
 // =============================================================================
