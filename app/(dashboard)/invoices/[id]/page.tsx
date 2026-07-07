@@ -10,6 +10,7 @@ import { InvoiceStatusBadge } from '@/components/shared/status-badge'
 import { PriorityBadge } from '@/components/shared/priority-badge'
 import { AiEmailButton } from '@/components/shared/ai-email-button'
 import { MarkPaidButton } from '@/components/invoices/mark-paid-button'
+import { DeleteInvoiceButton } from '@/components/invoices/delete-invoice-button'
 import { ArrowLeft, Calendar, Clock, AlertTriangle } from 'lucide-react'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -76,6 +77,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
               <MarkPaidButton invoiceId={id} />
             </>
           )}
+          <DeleteInvoiceButton invoiceId={id} invoiceNumber={invoice.invoice_number} />
         </div>
       </div>
 

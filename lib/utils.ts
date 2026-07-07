@@ -17,10 +17,15 @@ export function formatCurrency(amount: number, currency = 'USD'): string {
 export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return '—'
   const d = typeof date === 'string' ? new Date(date) : date
+  // Date-only strings ('2026-07-17') parse as UTC midnight; formatting them
+  // in local time shows the previous day for anyone west of Greenwich. A
+  // date-only value has no timezone — always render it as written.
+  const isDateOnly = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)
   return new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
+    ...(isDateOnly ? { timeZone: 'UTC' } : {}),
   }).format(d)
 }
 
@@ -40,8 +45,10 @@ export function daysUntil(date: string | Date | null | undefined): number {
 
 export function isOverdue(dueDate: string | Date | null | undefined): boolean {
   if (!dueDate) return false
-  const d = typeof dueDate === 'string' ? new Date(dueDate) : dueDate
-  return d < new Date()
+  // Date-only: due TODAY is not overdue — comparing raw Dates would flag an
+  // invoice overdue at midnight UTC on its own due date ("0d overdue").
+  const d = typeof dueDate === 'string' ? dueDate.split('T')[0] : dueDate.toISOString().split('T')[0]
+  return d < new Date().toISOString().split('T')[0]
 }
 
 export function slugify(text: string): string {

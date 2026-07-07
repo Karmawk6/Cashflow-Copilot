@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { formatCurrency } from '@/lib/utils'
+import { isPastDue } from '@/lib/follow-up-engine/engine'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrendingUp, DollarSign, Receipt, FileText, CheckCircle } from 'lucide-react'
 
@@ -27,7 +28,7 @@ export default async function AnalyticsPage() {
   const paidInvoices = (invoices ?? []).filter(i => i.status === 'paid')
   const recoveredRevenue = paidInvoices.reduce((sum, i) => sum + i.amount, 0)
   const overdueAmount = (invoices ?? [])
-    .filter(i => i.status === 'overdue' || (i.status !== 'paid' && i.status !== 'cancelled' && i.status !== 'draft' && new Date(i.due_date) < new Date()))
+    .filter(i => i.status === 'overdue' || (i.status !== 'paid' && i.status !== 'cancelled' && i.status !== 'draft' && isPastDue(i.due_date)))
     .reduce((sum, i) => sum + (i.amount - i.amount_paid), 0)
 
   // Follow-up metrics

@@ -15,9 +15,12 @@ export async function syncInvoiceStatusAndPriority(
 ): Promise<{ status: InvoiceStatus; priority: Priority; changed: boolean }> {
   const priority = invoice.priority_manual ? invoice.priority : computeInvoicePriority(invoice.due_date, invoice.status)
   // Date-only: an invoice due today is not overdue yet — overdue starts the
-  // day after, matching computeInvoicePriority's day math.
-  const status: InvoiceStatus =
-    invoice.status === 'sent' && isPastDue(invoice.due_date) ? 'overdue' : invoice.status
+  // day after, matching computeInvoicePriority's day math. The reverse rule
+  // heals rows the pre-fix code marked overdue prematurely (or whose due
+  // date was pushed out after they went overdue).
+  let status: InvoiceStatus = invoice.status
+  if (invoice.status === 'sent' && isPastDue(invoice.due_date)) status = 'overdue'
+  if (invoice.status === 'overdue' && !isPastDue(invoice.due_date)) status = 'sent'
 
   if (status === invoice.status && priority === invoice.priority) {
     return { status, priority, changed: false }

@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
-import { computeDashboardSummary } from '@/lib/follow-up-engine/engine'
+import { computeDashboardSummary, isPastDue } from '@/lib/follow-up-engine/engine'
 import { formatCurrency, formatDate, daysAgo } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -52,7 +52,7 @@ export default async function DashboardPage() {
   })
 
   const overdueInvoices = (invoices ?? [])
-    .filter((i) => i.status === 'overdue' || (i.status === 'sent' && new Date(i.due_date) < new Date()))
+    .filter((i) => i.status === 'overdue' || (i.status === 'sent' && isPastDue(i.due_date)))
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())
     .slice(0, 5)
 

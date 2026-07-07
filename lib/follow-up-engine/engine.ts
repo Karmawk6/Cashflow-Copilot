@@ -232,7 +232,9 @@ export function computeDashboardSummary(params: {
   followUps: Array<{ due_date: string | null; status: string }>
 }): DashboardSummary {
   const now = new Date()
-  const endOfWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+  // Date-only boundaries so an invoice due today is "at risk", not overdue
+  const today = now.toISOString().split('T')[0]
+  const endOfWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
   const unpaidInvoices = params.invoices.filter(
     (i) => i.status !== 'paid' && i.status !== 'cancelled' && i.status !== 'draft'
@@ -240,7 +242,7 @@ export function computeDashboardSummary(params: {
 
   const totalUnpaidAmount = unpaidInvoices.reduce((sum, i) => sum + (i.amount - i.amount_paid), 0)
 
-  const overdueInvoices = unpaidInvoices.filter((i) => new Date(i.due_date) < now)
+  const overdueInvoices = unpaidInvoices.filter((i) => isPastDue(i.due_date, now))
   const totalOverdueAmount = overdueInvoices.reduce((sum, i) => sum + (i.amount - i.amount_paid), 0)
   const overdueCount = overdueInvoices.length
 
@@ -262,11 +264,11 @@ export function computeDashboardSummary(params: {
     return due <= now
   }).length
 
-  // Money at risk this week = overdue invoices due within next 7 days + stale proposal amount
+  // Money at risk this week = already-overdue amount + invoices coming due
+  // within the next 7 days (inclusive of today, date-only)
   const atRiskThisWeek = params.invoices.filter((i) => {
     if (i.status === 'paid' || i.status === 'cancelled') return false
-    const due = new Date(i.due_date)
-    return due >= now && due <= endOfWeek
+    return i.due_date >= today && i.due_date <= endOfWeek
   })
   const moneyAtRiskThisWeek =
     atRiskThisWeek.reduce((sum, i) => sum + (i.amount - i.amount_paid), 0) +

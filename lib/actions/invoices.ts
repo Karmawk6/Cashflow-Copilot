@@ -147,8 +147,36 @@ export async function deleteInvoiceAction(id: string) {
   const org = await getOrganization()
   if (!org) redirect('/login')
 
-  await supabase.from('invoices').delete().eq('id', id).eq('organization_id', org.id)
+  const { data: invoice } = await supabase
+    .from('invoices')
+    .select('invoice_number')
+    .eq('id', id)
+    .eq('organization_id', org.id)
+    .single()
+
+  if (!invoice) return { error: 'Invoice not found' }
+
+  // The FK is ON DELETE SET NULL — clear pending reminders ourselves or they
+  // linger on the follow-ups list pointing at nothing.
+  await supabase
+    .from('follow_up_events')
+    .delete()
+    .eq('invoice_id', id)
+    .eq('organization_id', org.id)
+    .eq('status', 'pending')
+
+  const { error } = await supabase.from('invoices').delete().eq('id', id).eq('organization_id', org.id)
+  if (error) return { error: error.message }
+
+  await logActivity({
+    orgId: org.id,
+    type: 'invoice_updated',
+    entityType: 'invoice',
+    entityId: id,
+    description: `Deleted invoice ${invoice.invoice_number}`,
+  })
 
   revalidatePath('/invoices')
+  revalidatePath('/dashboard')
   redirect('/invoices')
 }
