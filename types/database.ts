@@ -185,6 +185,7 @@ export interface Invoice {
   due_date: string
   status: InvoiceStatus
   priority: Priority
+  priority_manual: boolean
   payment_link: string | null
   notes: string | null
   last_reminder_date: string | null

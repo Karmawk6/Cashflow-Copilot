@@ -3,10 +3,11 @@
 import { useState, useTransition } from 'react'
 import { CheckCircle, SkipForward } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AiEmailModal } from '@/components/shared/ai-email-modal'
-import { updateFollowUpStatusAction } from '@/lib/actions/follow-ups'
+import { updateFollowUpStatusAction, updateFollowUpPriorityAction } from '@/lib/actions/follow-ups'
 import { toast } from 'sonner'
-import type { EmailTemplateType } from '@/types/database'
+import type { EmailTemplateType, Priority } from '@/types/database'
 
 interface FollowUpActionsProps {
   followUpId: string
@@ -14,6 +15,7 @@ interface FollowUpActionsProps {
   contactName?: string | null
   clientEmail?: string | null
   type: 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'
+  priority: Priority
   amount?: number
   currency?: string
   invoiceNumber?: string
@@ -35,6 +37,7 @@ export function FollowUpActions({
   contactName,
   clientEmail,
   type,
+  priority,
   amount,
   currency,
   invoiceNumber,
@@ -44,6 +47,13 @@ export function FollowUpActions({
 }: FollowUpActionsProps) {
   const [modalOpen, setModalOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
+
+  const changePriority = (value: string) => {
+    startTransition(async () => {
+      const result = await updateFollowUpPriorityAction(followUpId, value as Priority)
+      if (result?.error) toast.error(result.error)
+    })
+  }
 
   const markComplete = () => {
     startTransition(async () => {
@@ -63,6 +73,17 @@ export function FollowUpActions({
 
   return (
     <>
+      <Select defaultValue={priority} onValueChange={changePriority} disabled={isPending}>
+        <SelectTrigger className="h-8 w-[110px] text-xs">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="low">Low</SelectItem>
+          <SelectItem value="medium">Medium</SelectItem>
+          <SelectItem value="high">High</SelectItem>
+          <SelectItem value="critical">Critical</SelectItem>
+        </SelectContent>
+      </Select>
       <Button variant="outline" size="sm" onClick={() => setModalOpen(true)}>
         Draft email
       </Button>

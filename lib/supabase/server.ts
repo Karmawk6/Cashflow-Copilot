@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import type { Database } from '@/types/database'
+import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 
 export async function createClient() {
   const cookieStore = await cookies()
@@ -59,6 +60,12 @@ export const getOrganization = cache(async () => {
     .select('*')
     .eq('id', profile.organization_id)
     .single()
+
+  if (!data) return null
+
+  // Live overdue/priority correction — every page load, not just the daily
+  // cron — so nothing sits showing yesterday's status until 8am UTC.
+  await syncOrgWorkState(supabase, data.id)
 
   return data
 })

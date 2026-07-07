@@ -37,6 +37,24 @@ export async function updateFollowUpStatusAction(id: string, status: FollowUpEve
   return { success: true }
 }
 
+export async function updateFollowUpPriorityAction(id: string, priority: Priority) {
+  const supabase = await createClient()
+  const org = await getOrganization()
+  if (!org) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('follow_up_events')
+    .update({ priority })
+    .eq('id', id)
+    .eq('organization_id', org.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/follow-ups')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 export async function runFollowUpEngineAction() {
   const supabase = await createClient()
   const org = await getOrganization()

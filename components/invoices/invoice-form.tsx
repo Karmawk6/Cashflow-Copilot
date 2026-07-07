@@ -98,6 +98,22 @@ export function InvoiceForm({ invoice, clients, action, title, defaultClientId }
               </Select>
             </div>
 
+            <div className="space-y-1.5">
+              <Label htmlFor="priority">Priority</Label>
+              <Select name="priority" defaultValue={invoice?.priority_manual ? invoice.priority : 'auto'}>
+                <SelectTrigger id="priority">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto (based on due date)</SelectItem>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="critical">Critical</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="col-span-2 space-y-1.5">
               <Label htmlFor="payment_link">Payment link</Label>
               <Input id="payment_link" name="payment_link" defaultValue={invoice?.payment_link ?? ''} placeholder="https://pay.stripe.com/..." />

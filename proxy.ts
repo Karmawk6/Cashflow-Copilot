@@ -36,6 +36,9 @@ export async function proxy(request: NextRequest) {
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/onboarding')
   const isProtectedRoute =
     !isAuthRoute &&
+    // /auth/* must stay reachable without a session: /auth/confirm is where
+    // the signup-confirmation email lands, before the user has any cookies.
+    !pathname.startsWith('/auth') &&
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/_next') &&
     !pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|css|js)$/) &&

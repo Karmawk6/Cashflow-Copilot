@@ -5,7 +5,17 @@ import { redirect } from 'next/navigation'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { logActivity } from './activities'
 import { computeInvoicePriority } from '@/lib/follow-up-engine/engine'
-import type { ActionState, InvoiceStatus } from '@/types/database'
+import type { ActionState, InvoiceStatus, Priority } from '@/types/database'
+
+/** The priority <select> submits "auto" or an explicit level; "auto" defers
+ *  to computeInvoicePriority and clears the manual override. */
+function parsePriority(formData: FormData, dueDate: string, status: InvoiceStatus): { priority: Priority; priority_manual: boolean } {
+  const raw = formData.get('priority') as string | null
+  if (raw && raw !== 'auto') {
+    return { priority: raw as Priority, priority_manual: true }
+  }
+  return { priority: computeInvoicePriority(dueDate, status), priority_manual: false }
+}
 
 export async function createInvoiceAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient()
@@ -26,7 +36,7 @@ export async function createInvoiceAction(_prevState: ActionState, formData: For
     issue_date: formData.get('issue_date') as string,
     due_date: dueDate,
     status,
-    priority: computeInvoicePriority(dueDate, status),
+    ...parsePriority(formData, dueDate, status),
     payment_link: (formData.get('payment_link') as string) || null,
     notes: (formData.get('notes') as string) || null,
   }
@@ -68,7 +78,7 @@ export async function updateInvoiceAction(id: string, _prevState: ActionState, f
     issue_date: formData.get('issue_date') as string,
     due_date: dueDate,
     status: newStatus,
-    priority: computeInvoicePriority(dueDate, newStatus),
+    ...parsePriority(formData, dueDate, newStatus),
     payment_link: (formData.get('payment_link') as string) || null,
     notes: (formData.get('notes') as string) || null,
   }
@@ -111,7 +121,7 @@ export async function markInvoicePaidAction(id: string) {
 
   const { error } = await supabase
     .from('invoices')
-    .update({ status: 'paid', amount_paid: invoice.amount, priority: 'low' })
+    .update({ status: 'paid', amount_paid: invoice.amount, priority: 'low', priority_manual: false })
     .eq('id', id)
     .eq('organization_id', org.id)
 

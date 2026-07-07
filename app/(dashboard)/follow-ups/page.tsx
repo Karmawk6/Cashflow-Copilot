@@ -4,7 +4,6 @@ import { createClient, getOrganization } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { PriorityBadge } from '@/components/shared/priority-badge'
 import { EmptyState } from '@/components/shared/empty-state'
 import { FollowUpActions } from '@/components/follow-ups/follow-up-actions'
 import { Bell, CheckCircle, SkipForward, Receipt, FileText, Ghost, CalendarClock } from 'lucide-react'
@@ -16,7 +15,7 @@ export default async function FollowUpsPage() {
   const org = await getOrganization()
   if (!org) redirect('/onboarding')
 
-  const { data: followUps } = await supabase
+  const { data } = await supabase
     .from('follow_up_events')
     .select(`
       *,
@@ -26,8 +25,15 @@ export default async function FollowUpsPage() {
     `)
     .eq('organization_id', org.id)
     .eq('status', 'pending')
-    .order('priority', { ascending: false })
     .order('due_date', { ascending: true })
+
+  // priority is a text column, so SQL ordering is alphabetical (critical
+  // would sort last) — rank it here instead. Stable sort keeps the
+  // due-date order within each priority level.
+  const priorityRank = { critical: 3, high: 2, medium: 1, low: 0 } as const
+  const followUps = (data ?? []).sort(
+    (a, b) => (priorityRank[b.priority as keyof typeof priorityRank] ?? 0) - (priorityRank[a.priority as keyof typeof priorityRank] ?? 0)
+  )
 
   const typeIcon = {
     invoice_reminder: Receipt,
@@ -81,7 +87,6 @@ export default async function FollowUpsPage() {
                           <span className="text-xs font-medium text-muted-foreground">
                             {typeLabel[fu.type as keyof typeof typeLabel]}
                           </span>
-                          <PriorityBadge priority={fu.priority} />
                         </div>
                         <div className="font-medium mt-0.5">
                           {client?.company_name ?? 'Unknown client'}
@@ -100,6 +105,7 @@ export default async function FollowUpsPage() {
                         contactName={client?.contact_name}
                         clientEmail={client?.email}
                         type={fu.type as 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'}
+                        priority={fu.priority}
                         amount={invoice?.amount ?? proposal?.amount}
                         currency={invoice?.currency ?? proposal?.currency}
                         invoiceNumber={invoice?.invoice_number}

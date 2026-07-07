@@ -29,16 +29,25 @@ export async function signup(_prevState: ActionState, formData: FormData): Promi
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName },
+      // Where the confirmation email lands. Our template links here directly;
+      // with Supabase's default template this becomes the post-verify redirect.
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/confirm`,
     },
   })
 
   if (error) {
     return { error: error.message }
+  }
+
+  // No session means "Confirm email" is required: the user can't onboard yet,
+  // so say so instead of dropping them into a form that would silently fail.
+  if (!data.session) {
+    redirect('/login?notice=confirm_email_sent')
   }
 
   redirect('/onboarding')

@@ -1,12 +1,48 @@
 'use client'
 
-import { useActionState } from 'react'
+import { Suspense, useActionState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { login } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+
+// Messages arriving via redirect (signup flow, email-confirmation link).
+const notices: Record<string, { text: string; tone: 'info' | 'error' }> = {
+  confirm_email_sent: {
+    text: 'Account created! Check your email for a confirmation link, then sign in.',
+    tone: 'info',
+  },
+  email_confirmed: {
+    text: 'Email confirmed — sign in to continue.',
+    tone: 'info',
+  },
+  confirmation_failed: {
+    text: 'That confirmation link is invalid or has expired. Try signing in below.',
+    tone: 'error',
+  },
+}
+
+function AuthNotice() {
+  const searchParams = useSearchParams()
+  const key = searchParams.get('notice') ?? searchParams.get('error')
+  const notice = key ? notices[key] : undefined
+  if (!notice) return null
+
+  return (
+    <div
+      className={
+        notice.tone === 'error'
+          ? 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive'
+          : 'rounded-md bg-primary/10 px-3 py-2 text-sm text-primary'
+      }
+    >
+      {notice.text}
+    </div>
+  )
+}
 
 export default function LoginPage() {
   const [state, action, pending] = useActionState(login, undefined)
@@ -19,6 +55,9 @@ export default function LoginPage() {
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-4">
+          <Suspense>
+            <AuthNotice />
+          </Suspense>
           {state?.error && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {state.error}

@@ -3,10 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import {
   invoiceNeedsFollowUp,
   proposalNeedsFollowUp,
-  computeInvoicePriority,
-  computeProposalPriority,
 } from '@/lib/follow-up-engine/engine'
 import { generateDueInvoices } from '@/lib/follow-up-engine/recurring'
+import { syncInvoiceStatusAndPriority, syncProposalStatusAndPriority } from '@/lib/follow-up-engine/sync'
 import type { Database, RecurringSchedule } from '@/types/database'
 
 // Vercel Cron: configured in vercel.json, runs daily.
@@ -77,19 +76,10 @@ export async function GET(request: Request) {
     const now = new Date().toISOString()
 
     for (const invoice of invoices ?? []) {
-      const newPriority = computeInvoicePriority(invoice.due_date, invoice.status)
-      const isNowOverdue = new Date(invoice.due_date) < new Date() && invoice.status === 'sent'
+      const { status: newStatus, priority: newPriority, changed } = await syncInvoiceStatusAndPriority(supabase, invoice)
+      const isNowOverdue = newStatus === 'overdue' && invoice.status !== 'overdue'
 
-      if (isNowOverdue || newPriority !== invoice.priority) {
-        await supabase
-          .from('invoices')
-          .update({
-            status: isNowOverdue ? 'overdue' : invoice.status,
-            priority: newPriority,
-          })
-          .eq('id', invoice.id)
-        totalUpdated++
-      }
+      if (changed) totalUpdated++
 
       if (isNowOverdue) {
         // A pending "upcoming payment" heads-up is moot once the payment is
@@ -131,16 +121,8 @@ export async function GET(request: Request) {
     // 3) Proposals → escalate stale ones and queue follow-ups
     // ------------------------------------------------------------------
     for (const proposal of proposals ?? []) {
-      const newPriority = computeProposalPriority(proposal.sent_date, proposal.status)
-
-      if (newPriority !== proposal.priority) {
-        const newStatus = newPriority !== 'low' && proposal.status === 'sent' ? 'follow_up_due' : proposal.status
-        await supabase
-          .from('proposals')
-          .update({ priority: newPriority, status: newStatus })
-          .eq('id', proposal.id)
-        totalUpdated++
-      }
+      const { priority: newPriority, changed } = await syncProposalStatusAndPriority(supabase, proposal)
+      if (changed) totalUpdated++
 
       if (proposalNeedsFollowUp(proposal.sent_date, proposal.status, proposal.last_follow_up_date, proposal.follow_up_cadence_days)) {
         const { data: existing } = await supabase
