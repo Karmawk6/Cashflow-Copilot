@@ -83,13 +83,11 @@ export async function updateRecurringScheduleAction(id: string, _prevState: Acti
     return { error: 'Payment plans need the number of installments' }
   }
 
-  const { data: schedule, error } = await supabase
+  const { error } = await supabase
     .from('recurring_schedules')
     .update(data)
     .eq('id', id)
     .eq('organization_id', org.id)
-    .select()
-    .single()
 
   if (error) return { error: error.message }
 
@@ -101,9 +99,10 @@ export async function updateRecurringScheduleAction(id: string, _prevState: Acti
     description: `Updated recurring schedule "${data.title}"`,
   })
 
-  if (schedule.status === 'active') {
-    await generateDueInvoices(supabase, schedule as RecurringSchedule)
-  }
+  // Deliberately no generateDueInvoices() here: editing a schedule (e.g.
+  // pulling next_due_date closer) must persist exactly what the user set.
+  // Billing/advancement happens on its own via the daily cron, same as any
+  // other schedule reaching its due date.
 
   revalidatePath('/invoices')
   redirect('/invoices?tab=recurring')
