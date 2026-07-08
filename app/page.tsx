@@ -58,7 +58,7 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="dark min-h-screen bg-background text-foreground">
       <header className="border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <span className="flex items-center gap-2.5 text-lg font-semibold">
@@ -82,7 +82,7 @@ export default async function HomePage() {
         <section className="mx-auto max-w-4xl px-6 pb-16 pt-24 text-center">
           <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
             Stop losing revenue to{' '}
-            <span className="bg-gradient-to-r from-[hsl(229_65%_45%)] to-[hsl(280_55%_50%)] bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[hsl(229_80%_70%)] to-[hsl(280_65%_70%)] bg-clip-text text-transparent">
               forgotten follow-ups
             </span>
           </h1>
