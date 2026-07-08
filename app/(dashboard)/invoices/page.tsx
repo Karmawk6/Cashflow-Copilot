@@ -5,7 +5,8 @@ import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 import { formatCurrency, formatDate, daysAgo, isOverdue } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { InvoiceStatusBadge } from '@/components/shared/status-badge'
-import { PriorityBadge } from '@/components/shared/priority-badge'
+import { PrioritySelect } from '@/components/shared/priority-select'
+import { updateInvoicePriorityAction } from '@/lib/actions/invoices'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -142,7 +143,11 @@ export default async function InvoicesPage({
                         <InvoiceStatusBadge status={invoice.status} />
                       </TableCell>
                       <TableCell>
-                        <PriorityBadge priority={invoice.priority} />
+                        <PrioritySelect
+                          priority={invoice.priority}
+                          action={updateInvoicePriorityAction.bind(null, invoice.id)}
+                          autoLabel="Auto (by due date)"
+                        />
                       </TableCell>
                       <TableCell className="text-sm">
                         <div className={isOverdue(invoice.due_date) && invoice.status !== 'paid' ? 'text-destructive font-medium' : 'text-muted-foreground'}>

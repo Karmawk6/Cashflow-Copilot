@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { logActivity } from './activities'
-import type { ActionState, ProposalStatus } from '@/types/database'
+import { computeProposalPriority } from '@/lib/follow-up-engine/engine'
+import type { ActionState, Priority, ProposalStatus } from '@/types/database'
 
 export async function createProposalAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient()
@@ -92,6 +93,42 @@ export async function deleteProposalAction(id: string) {
 
   revalidatePath('/proposals')
   redirect('/proposals')
+}
+
+/** Inline priority change from the proposals list. Requires the
+ *  proposals.priority_manual column (migration-2026-07-07-proposal-priority.sql);
+ *  an explicit level pins it against the age-based engine, "auto" unpins. */
+export async function updateProposalPriorityAction(id: string, value: Priority | 'auto') {
+  const supabase = await createClient()
+  const org = await getOrganization()
+  if (!org) return { error: 'Not authenticated' }
+
+  let update: { priority: Priority; priority_manual: boolean }
+  if (value === 'auto') {
+    const { data: proposal } = await supabase
+      .from('proposals')
+      .select('sent_date, status')
+      .eq('id', id)
+      .eq('organization_id', org.id)
+      .single()
+    if (!proposal) return { error: 'Proposal not found' }
+    update = { priority: computeProposalPriority(proposal.sent_date, proposal.status), priority_manual: false }
+  } else {
+    update = { priority: value, priority_manual: true }
+  }
+
+  const { error } = await supabase
+    .from('proposals')
+    .update(update)
+    .eq('id', id)
+    .eq('organization_id', org.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/proposals')
+  revalidatePath(`/proposals/${id}`)
+  revalidatePath('/dashboard')
+  return { success: true }
 }
 
 export async function updateProposalStatusAction(id: string, status: ProposalStatus) {

@@ -5,7 +5,8 @@ import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 import { formatCurrency, formatDate, daysAgo } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ProposalStatusBadge } from '@/components/shared/status-badge'
-import { PriorityBadge } from '@/components/shared/priority-badge'
+import { PrioritySelect } from '@/components/shared/priority-select'
+import { updateProposalPriorityAction } from '@/lib/actions/proposals'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Plus, FileText } from 'lucide-react'
@@ -88,7 +89,11 @@ export default async function ProposalsPage() {
                     <ProposalStatusBadge status={proposal.status} />
                   </TableCell>
                   <TableCell>
-                    <PriorityBadge priority={proposal.priority} />
+                    <PrioritySelect
+                      priority={proposal.priority}
+                      action={updateProposalPriorityAction.bind(null, proposal.id)}
+                      autoLabel="Auto (by age)"
+                    />
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {proposal.sent_date ? `${daysAgo(proposal.sent_date)}d ago` : '—'}

@@ -105,6 +105,41 @@ export async function updateInvoiceAction(id: string, _prevState: ActionState, f
   redirect(`/invoices/${id}`)
 }
 
+/** Inline priority change from the invoices list — same override semantics as
+ *  the edit form: an explicit level pins it, "auto" hands it back to the engine. */
+export async function updateInvoicePriorityAction(id: string, value: Priority | 'auto') {
+  const supabase = await createClient()
+  const org = await getOrganization()
+  if (!org) return { error: 'Not authenticated' }
+
+  let update: { priority: Priority; priority_manual: boolean }
+  if (value === 'auto') {
+    const { data: invoice } = await supabase
+      .from('invoices')
+      .select('due_date, status')
+      .eq('id', id)
+      .eq('organization_id', org.id)
+      .single()
+    if (!invoice) return { error: 'Invoice not found' }
+    update = { priority: computeInvoicePriority(invoice.due_date, invoice.status), priority_manual: false }
+  } else {
+    update = { priority: value, priority_manual: true }
+  }
+
+  const { error } = await supabase
+    .from('invoices')
+    .update(update)
+    .eq('id', id)
+    .eq('organization_id', org.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/invoices')
+  revalidatePath(`/invoices/${id}`)
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 export async function markInvoicePaidAction(id: string) {
   const supabase = await createClient()
   const org = await getOrganization()

@@ -163,6 +163,7 @@ export interface Proposal {
   expiration_date: string | null
   status: ProposalStatus
   priority: Priority
+  priority_manual: boolean
   follow_up_cadence_days: number
   last_follow_up_date: string | null
   notes: string | null

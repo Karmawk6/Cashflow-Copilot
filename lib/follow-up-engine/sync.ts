@@ -36,11 +36,15 @@ export async function syncInvoiceStatusAndPriority(
  */
 export async function syncProposalStatusAndPriority(
   supabase: SupabaseClient<Database>,
-  proposal: Pick<Proposal, 'id' | 'sent_date' | 'status' | 'priority'>
+  proposal: Pick<Proposal, 'id' | 'sent_date' | 'status' | 'priority' | 'priority_manual'>
 ): Promise<{ status: ProposalStatus; priority: Priority; changed: boolean }> {
-  const priority = computeProposalPriority(proposal.sent_date, proposal.status)
+  // A manually pinned priority only overrides the label — the sent →
+  // follow_up_due flip stays age-based so pinning "low" doesn't hide a
+  // proposal that objectively needs chasing.
+  const computed = computeProposalPriority(proposal.sent_date, proposal.status)
+  const priority = proposal.priority_manual ? proposal.priority : computed
   const status: ProposalStatus =
-    priority !== 'low' && proposal.status === 'sent' ? 'follow_up_due' : proposal.status
+    computed !== 'low' && proposal.status === 'sent' ? 'follow_up_due' : proposal.status
 
   if (status === proposal.status && priority === proposal.priority) {
     return { status, priority, changed: false }
@@ -69,7 +73,7 @@ export async function syncOrgWorkState(supabase: SupabaseClient<Database>, organ
         .in('status', ['sent', 'overdue', 'partially_paid']),
       supabase
         .from('proposals')
-        .select('id, sent_date, status, priority')
+        .select('id, sent_date, status, priority, priority_manual')
         .eq('organization_id', organizationId)
         .in('status', ['sent', 'viewed', 'follow_up_due']),
     ])

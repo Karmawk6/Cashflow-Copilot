@@ -7,7 +7,8 @@ import { ProposalForm } from '@/components/proposals/proposal-form'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ProposalStatusBadge } from '@/components/shared/status-badge'
-import { PriorityBadge } from '@/components/shared/priority-badge'
+import { PrioritySelect } from '@/components/shared/priority-select'
+import { updateProposalPriorityAction } from '@/lib/actions/proposals'
 import { AiEmailButton } from '@/components/shared/ai-email-button'
 import { ArrowLeft, Calendar, Clock } from 'lucide-react'
 
@@ -52,7 +53,11 @@ export default async function ProposalDetailPage({ params }: { params: Promise<{
           <h1 className="text-2xl font-bold tracking-tight">{proposal.title}</h1>
           <div className="flex items-center gap-3 mt-2">
             <ProposalStatusBadge status={proposal.status} />
-            <PriorityBadge priority={proposal.priority} />
+            <PrioritySelect
+              priority={proposal.priority}
+              action={updateProposalPriorityAction.bind(null, proposal.id)}
+              autoLabel="Auto (by age)"
+            />
             <span className="text-sm text-muted-foreground">
               {client?.company_name}
             </span>
