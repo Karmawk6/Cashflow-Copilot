@@ -44,6 +44,17 @@ export async function signup(_prevState: ActionState, formData: FormData): Promi
     return { error: error.message }
   }
 
+  // Supabase's enumeration protection makes signUp "succeed" for an email
+  // that already has a confirmed account — but the returned user has no
+  // identities. Surface that as "sign in instead" rather than the misleading
+  // "confirmation email sent" notice.
+  if (data.user && data.user.identities?.length === 0) {
+    return {
+      error:
+        'An account with this email already exists. Please sign in instead.',
+    }
+  }
+
   // No session means "Confirm email" is required: the user can't onboard yet,
   // so say so instead of dropping them into a form that would silently fail.
   if (!data.session) {
