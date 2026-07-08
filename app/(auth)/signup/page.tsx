@@ -39,6 +39,17 @@ export default function SignupPage() {
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? 'Creating account...' : 'Create account'}
           </Button>
+          <p className="text-center text-xs text-muted-foreground">
+            By creating an account, you agree to our{' '}
+            <Link href="/terms" className="underline hover:text-foreground">
+              Terms &amp; Conditions
+            </Link>{' '}
+            and{' '}
+            <Link href="/privacy" className="underline hover:text-foreground">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account?{' '}

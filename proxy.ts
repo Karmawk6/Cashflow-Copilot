@@ -39,6 +39,9 @@ export async function proxy(request: NextRequest) {
     // /auth/* must stay reachable without a session: /auth/confirm is where
     // the signup-confirmation email lands, before the user has any cookies.
     !pathname.startsWith('/auth') &&
+    // Legal pages must be readable before signing up.
+    pathname !== '/terms' &&
+    pathname !== '/privacy' &&
     !pathname.startsWith('/api') &&
     !pathname.startsWith('/_next') &&
     !pathname.match(/\.(svg|png|jpg|jpeg|gif|webp|ico|css|js)$/) &&
