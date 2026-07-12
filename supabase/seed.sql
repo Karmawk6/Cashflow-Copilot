@@ -1,4 +1,4 @@
--- CashFlow Copilot Demo Seed Data
+-- Duebird Demo Seed Data
 -- Run this AFTER creating a user account and completing onboarding.
 -- Replace 'YOUR_USER_ID' and 'YOUR_ORG_ID' with actual values from Supabase.
 

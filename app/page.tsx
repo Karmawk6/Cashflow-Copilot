@@ -65,7 +65,7 @@ export default async function HomePage() {
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[hsl(229_70%_55%)] to-[hsl(280_55%_55%)] text-sm font-bold text-white">
               C
             </span>
-            CashFlow Copilot
+            Duebird
           </span>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild>
@@ -87,7 +87,7 @@ export default async function HomePage() {
             </span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-            CashFlow Copilot gives consultants and agencies one dashboard for
+            Duebird gives consultants and agencies one dashboard for
             clients, proposals, and invoices — and tells you exactly who to
             follow up with today, with the email already drafted.
           </p>
@@ -144,7 +144,7 @@ export default async function HomePage() {
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-3 px-6 py-8 text-center text-sm text-muted-foreground sm:flex-row sm:justify-between sm:text-left">
           <span>
-            © {new Date().getFullYear()} CashFlow Copilot. Built for
+            © {new Date().getFullYear()} Duebird. Built for
             consultants, agencies, and CDFIs.
           </span>
           <div className="flex gap-4">

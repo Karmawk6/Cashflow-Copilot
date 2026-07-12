@@ -1,4 +1,4 @@
--- CashFlow Copilot Database Schema
+-- Duebird Database Schema
 -- Run this in your Supabase SQL editor
 
 -- Enable UUID extension

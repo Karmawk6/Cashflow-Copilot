@@ -7,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-lg">
           C
         </div>
-        <span className="text-xl font-semibold text-foreground">CashFlow Copilot</span>
+        <span className="text-xl font-semibold text-foreground">Duebird</span>
       </div>
       {children}
       <div className="mt-8 flex gap-4 text-xs text-muted-foreground">

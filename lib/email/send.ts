@@ -25,7 +25,7 @@ export async function sendEmail({ to, subject, body, from, replyTo }: SendEmailP
   }
 
   const resend = new Resend(process.env.RESEND_API_KEY)
-  const fromAddress = from ?? process.env.RESEND_FROM_EMAIL ?? 'noreply@cashflowcopilot.com'
+  const fromAddress = from ?? process.env.RESEND_FROM_EMAIL ?? 'noreply@duebird.io'
 
   // Reply-To the member who sent it, so client replies reach a human inbox
   // even though the email goes out from the platform domain.

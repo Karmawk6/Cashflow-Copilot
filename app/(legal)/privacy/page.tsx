@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { CONTACT_EMAIL, EFFECTIVE_DATE } from '../legal-info'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — CashFlow Copilot',
-  description: 'How CashFlow Copilot collects, stores, and protects your data.',
+  title: 'Privacy Policy — Duebird',
+  description: 'How Duebird collects, stores, and protects your data.',
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
       <p className="mt-2 text-sm text-muted-foreground">Effective date: {EFFECTIVE_DATE}</p>
 
       <p className="mt-6 text-sm leading-6 text-muted-foreground">
-        This policy explains what information CashFlow Copilot (&quot;we&quot;,
+        This policy explains what information Duebird (&quot;we&quot;,
         &quot;the Service&quot;) collects, how it is stored and protected, who it
         is shared with, and the choices you have. The short version: we collect
         only what the product needs to work, we never sell your data, and we do
@@ -133,7 +133,7 @@ export default function PrivacyPage() {
           disconnect Gmail or delete your account.
         </p>
         <p>
-          CashFlow Copilot&apos;s use and transfer of information received from
+          Duebird&apos;s use and transfer of information received from
           Google APIs adheres to the{' '}
           <a
             href="https://developers.google.com/terms/api-services-user-data-policy"

@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { CONTACT_EMAIL, EFFECTIVE_DATE } from '../legal-info'
 
 export const metadata: Metadata = {
-  title: 'Terms & Conditions — CashFlow Copilot',
-  description: 'The terms that govern your use of CashFlow Copilot.',
+  title: 'Terms & Conditions — Duebird',
+  description: 'The terms that govern your use of Duebird.',
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -23,8 +23,7 @@ export default function TermsPage() {
       <p className="mt-2 text-sm text-muted-foreground">Effective date: {EFFECTIVE_DATE}</p>
 
       <p className="mt-6 text-sm leading-6 text-muted-foreground">
-        These Terms &amp; Conditions (&quot;Terms&quot;) govern your use of CashFlow
-        Copilot (the &quot;Service&quot;), a tool that helps consultants and agencies
+        These Terms &amp; Conditions (&quot;Terms&quot;) govern your use of Duebird (the &quot;Service&quot;), a tool that helps consultants and agencies
         track clients, proposals, and invoices and draft follow-up emails. By
         creating an account or using the Service, you agree to these Terms. If
         you do not agree, do not use the Service.
@@ -78,7 +77,7 @@ export default function TermsPage() {
 
       <Section title="5. We never touch your money">
         <p>
-          CashFlow Copilot does not process, hold, or transfer payments. Any
+          Duebird does not process, hold, or transfer payments. Any
           payment links included in your emails are your own, provided by you,
           and payments happen entirely between you and your clients. Invoice
           amounts and statuses in the Service are records you maintain — they
@@ -136,7 +135,7 @@ export default function TermsPage() {
 
       <Section title="10. Limitation of liability">
         <p>
-          To the maximum extent permitted by law, CashFlow Copilot and its
+          To the maximum extent permitted by law, Duebird and its
           operators will not be liable for any indirect, incidental, special,
           consequential, or punitive damages, or for lost profits, revenue,
           data, or business opportunities, arising from your use of the

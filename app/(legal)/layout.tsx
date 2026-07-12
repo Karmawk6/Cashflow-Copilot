@@ -9,14 +9,14 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
               C
             </div>
-            <span className="font-semibold">CashFlow Copilot</span>
+            <span className="font-semibold">Duebird</span>
           </Link>
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">{children}</main>
       <footer className="border-t">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-8 text-sm text-muted-foreground">
-          <span>© {new Date().getFullYear()} CashFlow Copilot</span>
+          <span>© {new Date().getFullYear()} Duebird</span>
           <div className="flex gap-4">
             <Link href="/terms" className="hover:text-foreground">Terms</Link>
             <Link href="/privacy" className="hover:text-foreground">Privacy</Link>

@@ -185,7 +185,7 @@ export function CsvImport() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `cashflow-copilot-${type}-template.csv`
+    a.download = `duebird-${type}-template.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

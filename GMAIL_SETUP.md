@@ -9,7 +9,7 @@ The app only requests two scopes: `gmail.send` (send, never read) and
 ## One-time Google Cloud setup (~15 minutes)
 
 1. Go to [console.cloud.google.com](https://console.cloud.google.com), create a project
-   (e.g. `cashflow-copilot`).
+   (e.g. `duebird`).
 2. **APIs & Services → Library** → search **Gmail API** → Enable.
 3. **APIs & Services → OAuth consent screen**:
    - User type: **External**, then fill in app name, support email, developer email.
@@ -20,7 +20,7 @@ The app only requests two scopes: `gmail.send` (send, never read) and
    - Application type: **Web application**
    - Authorized redirect URIs — add BOTH:
      - `http://localhost:3000/api/gmail/callback`
-     - `https://cashflow-copilot-six.vercel.app/api/gmail/callback`
+     - `https://duebird.io/api/gmail/callback`
 5. Copy the **Client ID** and **Client secret** into:
    - `.env.local` (for local dev)
    - Vercel → Project → Settings → Environment Variables (for production)

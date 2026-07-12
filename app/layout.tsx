@@ -14,9 +14,10 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://duebird.io'),
   title: {
-    default: 'CashFlow Copilot',
-    template: '%s — CashFlow Copilot',
+    default: 'Duebird',
+    template: '%s — Duebird',
   },
   description:
     'Track unpaid invoices, stale proposals, and ghosted leads. Get paid faster with automated follow-ups.',

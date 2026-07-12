@@ -75,7 +75,7 @@ export default async function SettingsPage() {
           invitations={invitations ?? []}
           ownerId={org.owner_id}
           isOwner={isOwner}
-          appUrl={process.env.NEXT_PUBLIC_APP_URL ?? 'https://cashflow-copilot-six.vercel.app'}
+          appUrl={process.env.NEXT_PUBLIC_APP_URL ?? 'https://duebird.io'}
         />
       )}
       <CsvImport />

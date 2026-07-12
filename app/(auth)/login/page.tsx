@@ -51,7 +51,7 @@ export default function LoginPage() {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Welcome back</CardTitle>
-        <CardDescription>Sign in to your CashFlow Copilot account</CardDescription>
+        <CardDescription>Sign in to your Duebird account</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-4">

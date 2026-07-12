@@ -1,4 +1,4 @@
-# CashFlow Copilot
+# Duebird
 
 Collections and follow-up automation for consultants, agencies, and CDFIs. Track unpaid invoices, stale proposals, and ghosted leads — then draft and send smart follow-up emails.
 
@@ -38,7 +38,7 @@ Demo mode uses template-based AI email drafts (no OpenAI key needed) and logs em
 
 ```bash
 git clone <repo>
-cd cashflow-copilot
+cd duebird
 npm install
 ```
 
