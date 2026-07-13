@@ -2,8 +2,39 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { z } from 'zod'
 import type { ActionState } from '@/types/database'
+
+const INVITE_ONLY_MESSAGE =
+  'Duebird is invite-only right now. Book a call at duebird.io to get access — or, if your team already uses Duebird, ask your workspace owner to invite you with this email.'
+
+// Signup is allowed for emails the owner has approved (client paid their
+// invoice) OR emails with a pending teammate invitation. Runs pre-auth, so it
+// needs the service-role client — RLS hides both tables from the anon key.
+// Both tables store emails lowercased/trimmed (DB trigger / inviteTeammate).
+async function isEmailAllowedToSignUp(email: string): Promise<boolean> {
+  const admin = createAdminClient()
+  const normalized = email.trim().toLowerCase()
+  const [approved, invited] = await Promise.all([
+    admin
+      .from('approved_emails')
+      .select('email')
+      .eq('email', normalized)
+      .maybeSingle(),
+    admin
+      .from('invitations')
+      .select('id')
+      .eq('status', 'pending')
+      .eq('email', normalized)
+      .limit(1)
+      .maybeSingle(),
+  ])
+  if (approved.error || invited.error) {
+    throw approved.error ?? invited.error
+  }
+  return Boolean(approved.data || invited.data)
+}
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -26,6 +57,16 @@ export async function signup(_prevState: ActionState, formData: FormData): Promi
   const parsed = signupSchema.safeParse(raw)
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message }
+  }
+
+  // Gate BEFORE auth.signUp: a rejected email never creates an auth user and
+  // never receives a confirmation email. Fail closed on any lookup error.
+  try {
+    if (!(await isEmailAllowedToSignUp(parsed.data.email))) {
+      return { error: INVITE_ONLY_MESSAGE }
+    }
+  } catch {
+    return { error: 'Something went wrong — please try again in a moment.' }
   }
 
   const supabase = await createClient()
@@ -105,6 +146,27 @@ export async function completeOnboarding(_prevState: ActionState, formData: Form
 
   if (!orgName || orgName.length < 2) {
     return { error: 'Organization name must be at least 2 characters' }
+  }
+
+  // Creating a workspace is the paid thing — allowlist only, deliberately NOT
+  // invitations: invited teammates join an existing org via the Join card
+  // above this form, they don't get to create their own.
+  try {
+    const admin = createAdminClient()
+    const { data: approved, error: approvedError } = await admin
+      .from('approved_emails')
+      .select('email')
+      .eq('email', user.email!.trim().toLowerCase())
+      .maybeSingle()
+    if (approvedError) throw approvedError
+    if (!approved) {
+      return {
+        error:
+          'Creating a new workspace requires approval — book a call at duebird.io. If you were invited to join a team, use the Join button above instead.',
+      }
+    }
+  } catch {
+    return { error: 'Something went wrong — please try again in a moment.' }
   }
 
   const slug = orgName

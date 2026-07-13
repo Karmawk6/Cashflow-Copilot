@@ -15,7 +15,10 @@ export default function SignupPage() {
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>Create your account</CardTitle>
-        <CardDescription>Start recovering revenue in minutes</CardDescription>
+        <CardDescription>
+          Duebird is invite-only — sign up with the email we approved or the
+          email your team invitation was sent to.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-4">

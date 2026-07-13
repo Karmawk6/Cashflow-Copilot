@@ -210,6 +210,33 @@ CREATE TABLE IF NOT EXISTS invitations (
 );
 
 -- =============================================================================
+-- APPROVED EMAILS (invite-only signup allowlist)
+-- =============================================================================
+-- Owner adds a client's email here after they pay; the signup server action
+-- checks it with the service-role key. RLS is enabled with NO policies on
+-- purpose — anon/authenticated roles can never read or probe this table.
+CREATE TABLE IF NOT EXISTS approved_emails (
+  email TEXT PRIMARY KEY,
+  note TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION public.normalize_approved_email()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.email := lower(trim(NEW.email));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public, pg_temp;
+
+DROP TRIGGER IF EXISTS trg_normalize_approved_email ON approved_emails;
+CREATE TRIGGER trg_normalize_approved_email
+  BEFORE INSERT OR UPDATE ON approved_emails
+  FOR EACH ROW EXECUTE FUNCTION normalize_approved_email();
+
+ALTER TABLE approved_emails ENABLE ROW LEVEL SECURITY;
+
+-- =============================================================================
 -- AUTO-CREATE PROFILE ON SIGNUP
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()

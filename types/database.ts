@@ -80,6 +80,12 @@ export type Database = {
         Update: DbRow<Partial<Omit<GmailConnection, 'id' | 'created_at'>>>
         Relationships: []
       }
+      approved_emails: {
+        Row: DbRow<ApprovedEmail>
+        Insert: DbRow<Partial<Omit<ApprovedEmail, 'created_at'>> & Pick<ApprovedEmail, 'email'>>
+        Update: DbRow<Partial<Omit<ApprovedEmail, 'created_at'>>>
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -95,6 +101,12 @@ export type Database = {
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
   }
+}
+
+export interface ApprovedEmail {
+  email: string
+  note: string | null
+  created_at: string
 }
 
 export interface Invitation {

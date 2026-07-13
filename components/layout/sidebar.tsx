@@ -44,7 +44,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-14 items-center gap-2.5 border-b border-white/10 px-4">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[hsl(229_70%_55%)] to-[hsl(280_55%_55%)] text-sm font-bold text-white">
-          C
+          D
         </div>
         <span className="text-sm font-semibold text-white">Duebird</span>
       </div>
