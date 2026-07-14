@@ -23,7 +23,7 @@ export async function Header() {
     : user?.email?.slice(0, 2).toUpperCase() ?? 'U'
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-card px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/60 bg-background/60 px-6 backdrop-blur-xl backdrop-saturate-150">
       <PageTitle />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

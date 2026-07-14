@@ -40,7 +40,13 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-60 flex-col bg-[hsl(228_30%_9%)] text-[hsl(220_20%_78%)]">
+    <div className="relative isolate flex h-full w-60 flex-col overflow-hidden border-r border-white/10 bg-[hsl(228_30%_9%/0.88)] text-[hsl(220_20%_78%)] backdrop-blur-2xl backdrop-saturate-150">
+      {/* Vibrancy: static color glows behind the nav give the glass depth.
+          Parent is `relative isolate` so -z-10 keeps them under the content. */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute -left-20 -top-24 h-64 w-64 rounded-full bg-[hsl(229_80%_60%/0.16)] blur-[90px]" />
+        <div className="absolute -right-24 bottom-8 h-72 w-72 rounded-full bg-[hsl(280_65%_60%/0.12)] blur-[100px]" />
+      </div>
       {/* Logo */}
       <div className="flex h-14 items-center gap-2.5 border-b border-white/10 px-4">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[hsl(229_70%_55%)] to-[hsl(280_55%_55%)] text-sm font-bold text-white">

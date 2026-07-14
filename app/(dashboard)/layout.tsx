@@ -10,14 +10,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // fixed inset-0 (not h-screen): portalled selects/toasts can briefly grow the
   // body taller than the viewport, and a trackpad scroll then drags an h-screen
   // shell out of view (sidebar footer ends mid-page). A fixed shell can't move.
+  // The header lives INSIDE the scroll container (sticky, not a flex sibling)
+  // so page content actually passes beneath its glass backdrop-blur.
   return (
     <div className="fixed inset-0 flex overflow-hidden">
       <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="relative flex-1 overflow-y-auto bg-background">
         <Header />
-        <main className="flex-1 overflow-y-auto bg-background p-6">
-          {children}
-        </main>
+        <main className="p-6">{children}</main>
       </div>
     </div>
   )
