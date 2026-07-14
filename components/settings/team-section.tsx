@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { Users, Crown, X } from 'lucide-react'
 import { inviteTeammate, revokeInvitation } from '@/lib/actions/team'
+import { RemoveMemberButton } from '@/components/settings/remove-member-button'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -55,7 +56,12 @@ export function TeamSection({
                   <Crown className="h-3 w-3" /> Owner
                 </Badge>
               ) : (
-                <Badge variant="outline">Member</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">Member</Badge>
+                  {isOwner && (
+                    <RemoveMemberButton memberId={m.id} memberLabel={m.full_name ?? m.email} />
+                  )}
+                </div>
               )}
             </div>
           ))}

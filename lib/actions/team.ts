@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import type { ActionState } from '@/types/database'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -56,6 +57,59 @@ export async function revokeInvitation(invitationId: string) {
     .eq('organization_id', org.id)
 
   revalidatePath('/settings')
+}
+
+export async function removeTeamMember(memberId: string): Promise<ActionState> {
+  const [user, org] = await Promise.all([getUser(), getOrganization()])
+  if (!user || !org) redirect('/login')
+
+  if (org.owner_id !== user.id) {
+    return { error: 'Only the workspace owner can remove teammates' }
+  }
+  if (memberId === org.owner_id) {
+    return { error: 'The workspace owner cannot be removed' }
+  }
+
+  // RLS lets the owner read teammates but not update their profiles, so the
+  // membership change goes through the service-role client after the
+  // owner/target checks above.
+  try {
+    const admin = createAdminClient()
+
+    const { data: member, error: memberError } = await admin
+      .from('profiles')
+      .select('id, email')
+      .eq('id', memberId)
+      .eq('organization_id', org.id)
+      .maybeSingle()
+    if (memberError) return { error: memberError.message }
+    if (!member) {
+      return { error: 'That person is not a member of this workspace' }
+    }
+
+    // Delete their accepted invitation first: the tenant-guard trigger treats
+    // it as standing authorization to point profiles.organization_id at this
+    // org (a removed member could rejoin themselves), and its
+    // UNIQUE(org, email) row would block inviting them again later.
+    const { error: inviteError } = await admin
+      .from('invitations')
+      .delete()
+      .eq('organization_id', org.id)
+      .eq('email', member.email.toLowerCase())
+    if (inviteError) return { error: inviteError.message }
+
+    const { error: profileError } = await admin
+      .from('profiles')
+      .update({ organization_id: null })
+      .eq('id', memberId)
+      .eq('organization_id', org.id)
+    if (profileError) return { error: profileError.message }
+  } catch {
+    return { error: 'Could not remove this member. Please try again.' }
+  }
+
+  revalidatePath('/settings')
+  return { success: true }
 }
 
 export async function acceptInvitation(invitationId: string) {
