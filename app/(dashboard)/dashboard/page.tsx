@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 import { computeDashboardSummary, isPastDue } from '@/lib/follow-up-engine/engine'
 import { formatCurrency, daysAgo } from '@/lib/utils'
@@ -22,9 +21,7 @@ import {
 export const metadata = { title: 'Dashboard' }
 
 export default async function DashboardPage() {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/onboarding')
+  const { supabase, org } = await requireOrgOrRedirect('/onboarding')
 
   // Bring overdue status & priorities up to date before fetching what we show
   await syncOrgWorkState(supabase, org.id)

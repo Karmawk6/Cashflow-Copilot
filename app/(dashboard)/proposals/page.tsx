@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 import { formatCurrency, daysAgo } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -14,9 +13,7 @@ import { Plus, FileText } from 'lucide-react'
 export const metadata = { title: 'Proposals' }
 
 export default async function ProposalsPage() {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/onboarding')
+  const { supabase, org } = await requireOrgOrRedirect('/onboarding')
 
   // Bring overdue status & priorities up to date before fetching what we show
   await syncOrgWorkState(supabase, org.id)

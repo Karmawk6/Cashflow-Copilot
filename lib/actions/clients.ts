@@ -2,14 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { logActivity } from './activities'
 import type { ActionState, ClientStatus } from '@/types/database'
 
 export async function createClientAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const data = {
     organization_id: org.id,
@@ -40,9 +38,7 @@ export async function createClientAction(_prevState: ActionState, formData: Form
 }
 
 export async function updateClientAction(id: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const data = {
     company_name: formData.get('company_name') as string,
@@ -76,9 +72,7 @@ export async function updateClientAction(id: string, _prevState: ActionState, fo
 }
 
 export async function deleteClientAction(id: string) {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   await supabase.from('clients').delete().eq('id', id).eq('organization_id', org.id)
 

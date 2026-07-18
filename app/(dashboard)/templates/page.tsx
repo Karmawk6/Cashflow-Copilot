@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/shared/empty-state'
@@ -25,9 +24,7 @@ const toneLabels: Record<EmailTone, string> = {
 }
 
 export default async function TemplatesPage() {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/onboarding')
+  const { supabase, org } = await requireOrgOrRedirect('/onboarding')
 
   const { data: templates } = await supabase
     .from('email_templates')

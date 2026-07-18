@@ -1,6 +1,7 @@
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { formatCurrency, formatDate, daysAgo, isOverdue } from '@/lib/utils'
 import { updateInvoiceAction } from '@/lib/actions/invoices'
 import { InvoiceForm } from '@/components/invoices/invoice-form'
@@ -22,9 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function InvoiceDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const [{ data: invoice }, { data: clients }] = await Promise.all([
     supabase

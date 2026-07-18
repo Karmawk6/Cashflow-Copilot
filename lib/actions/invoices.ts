@@ -2,8 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { getOrgContext, requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { logActivity } from './activities'
+import { applyPriorityChange } from './entity-priority'
 import { computeInvoicePriority } from '@/lib/follow-up-engine/engine'
 import type { ActionState, InvoiceStatus, Priority } from '@/types/database'
 
@@ -18,9 +19,7 @@ function parsePriority(formData: FormData, dueDate: string, status: InvoiceStatu
 }
 
 export async function createInvoiceAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const dueDate = formData.get('due_date') as string
   const status = (formData.get('status') as InvoiceStatus) || 'draft'
@@ -62,9 +61,7 @@ export async function createInvoiceAction(_prevState: ActionState, formData: For
 }
 
 export async function updateInvoiceAction(id: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const dueDate = formData.get('due_date') as string
   const newStatus = (formData.get('status') as InvoiceStatus) || 'draft'
@@ -108,41 +105,20 @@ export async function updateInvoiceAction(id: string, _prevState: ActionState, f
 /** Inline priority change from the invoices list — same override semantics as
  *  the edit form: an explicit level pins it, "auto" hands it back to the engine. */
 export async function updateInvoicePriorityAction(id: string, value: Priority | 'auto') {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) return { error: 'Not authenticated' }
-
-  let update: { priority: Priority; priority_manual: boolean }
-  if (value === 'auto') {
+  return applyPriorityChange('invoices', id, value, async (supabase, orgId) => {
     const { data: invoice } = await supabase
       .from('invoices')
       .select('due_date, status')
       .eq('id', id)
-      .eq('organization_id', org.id)
+      .eq('organization_id', orgId)
       .single()
     if (!invoice) return { error: 'Invoice not found' }
-    update = { priority: computeInvoicePriority(invoice.due_date, invoice.status), priority_manual: false }
-  } else {
-    update = { priority: value, priority_manual: true }
-  }
-
-  const { error } = await supabase
-    .from('invoices')
-    .update(update)
-    .eq('id', id)
-    .eq('organization_id', org.id)
-
-  if (error) return { error: error.message }
-
-  revalidatePath('/invoices')
-  revalidatePath(`/invoices/${id}`)
-  revalidatePath('/dashboard')
-  return { success: true }
+    return { priority: computeInvoicePriority(invoice.due_date, invoice.status), priority_manual: false }
+  })
 }
 
 export async function markInvoicePaidAction(id: string) {
-  const supabase = await createClient()
-  const org = await getOrganization()
+  const { supabase, org } = await getOrgContext()
   if (!org) return { error: 'Not authenticated' }
 
   const { data: invoice, error: fetchError } = await supabase
@@ -178,9 +154,7 @@ export async function markInvoicePaidAction(id: string) {
 }
 
 export async function deleteInvoiceAction(id: string) {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const { data: invoice } = await supabase
     .from('invoices')

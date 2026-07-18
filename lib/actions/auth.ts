@@ -1,8 +1,9 @@
 'use server'
 
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { slugify } from '@/lib/utils'
 import { z } from 'zod'
 import type { ActionState } from '@/types/database'
 
@@ -137,7 +138,7 @@ export async function logout() {
 
 export async function completeOnboarding(_prevState: ActionState, formData: FormData): Promise<ActionState> {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
   if (!user) redirect('/login')
 
   const orgName = formData.get('orgName') as string
@@ -169,12 +170,7 @@ export async function completeOnboarding(_prevState: ActionState, formData: Form
     return { error: 'Something went wrong — please try again in a moment.' }
   }
 
-  const slug = orgName
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_-]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    + '-' + Math.random().toString(36).slice(2, 6)
+  const slug = slugify(orgName) + '-' + Math.random().toString(36).slice(2, 6)
 
   const { data: org, error: orgError } = await supabase
     .from('organizations')

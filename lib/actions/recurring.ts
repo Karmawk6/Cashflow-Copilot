@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { getOrgContext, requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { logActivity } from './activities'
 import { advanceDueDate } from '@/lib/follow-up-engine/engine'
 import { generateDueInvoices } from '@/lib/follow-up-engine/recurring'
@@ -31,9 +31,7 @@ function parseScheduleForm(formData: FormData) {
 }
 
 export async function createRecurringScheduleAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const data = parseScheduleForm(formData)
 
@@ -70,9 +68,7 @@ export async function createRecurringScheduleAction(_prevState: ActionState, for
 }
 
 export async function updateRecurringScheduleAction(id: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const data = parseScheduleForm(formData)
 
@@ -121,8 +117,7 @@ export async function cancelScheduleAction(id: string) {
  * next due date is rolled forward to the first one that is today or later.
  */
 export async function resumeScheduleAction(id: string) {
-  const supabase = await createClient()
-  const org = await getOrganization()
+  const { supabase, org } = await getOrgContext()
   if (!org) return { error: 'Not authenticated' }
 
   const { data: schedule } = await supabase
@@ -161,8 +156,7 @@ export async function resumeScheduleAction(id: string) {
 }
 
 async function setScheduleStatus(id: string, status: 'paused' | 'cancelled', description: string) {
-  const supabase = await createClient()
-  const org = await getOrganization()
+  const { supabase, org } = await getOrgContext()
   if (!org) return { error: 'Not authenticated' }
 
   const { error } = await supabase

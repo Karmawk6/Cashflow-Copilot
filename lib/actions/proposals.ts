@@ -2,15 +2,18 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { getOrgContext, requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { logActivity } from './activities'
+import { applyPriorityChange } from './entity-priority'
 import { computeProposalPriority } from '@/lib/follow-up-engine/engine'
 import type { ActionState, Priority, ProposalStatus } from '@/types/database'
 
+function proposalActivityType(status: ProposalStatus) {
+  return status === 'won' ? 'proposal_won' : status === 'lost' ? 'proposal_lost' : 'proposal_updated'
+}
+
 export async function createProposalAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const data = {
     organization_id: org.id,
@@ -45,9 +48,7 @@ export async function createProposalAction(_prevState: ActionState, formData: Fo
 }
 
 export async function updateProposalAction(id: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const newStatus = formData.get('status') as ProposalStatus
   const data = {
@@ -70,10 +71,9 @@ export async function updateProposalAction(id: string, _prevState: ActionState, 
 
   if (error) return { error: error.message }
 
-  const activityType = newStatus === 'won' ? 'proposal_won' : newStatus === 'lost' ? 'proposal_lost' : 'proposal_updated'
   await logActivity({
     orgId: org.id,
-    type: activityType,
+    type: proposalActivityType(newStatus),
     entityType: 'proposal',
     entityId: id,
     description: `Updated proposal: ${data.title} → ${newStatus}`,
@@ -85,9 +85,7 @@ export async function updateProposalAction(id: string, _prevState: ActionState, 
 }
 
 export async function deleteProposalAction(id: string) {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   await supabase.from('proposals').delete().eq('id', id).eq('organization_id', org.id)
 
@@ -99,41 +97,20 @@ export async function deleteProposalAction(id: string) {
  *  proposals.priority_manual column (migration-2026-07-07-proposal-priority.sql);
  *  an explicit level pins it against the age-based engine, "auto" unpins. */
 export async function updateProposalPriorityAction(id: string, value: Priority | 'auto') {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) return { error: 'Not authenticated' }
-
-  let update: { priority: Priority; priority_manual: boolean }
-  if (value === 'auto') {
+  return applyPriorityChange('proposals', id, value, async (supabase, orgId) => {
     const { data: proposal } = await supabase
       .from('proposals')
       .select('sent_date, status')
       .eq('id', id)
-      .eq('organization_id', org.id)
+      .eq('organization_id', orgId)
       .single()
     if (!proposal) return { error: 'Proposal not found' }
-    update = { priority: computeProposalPriority(proposal.sent_date, proposal.status), priority_manual: false }
-  } else {
-    update = { priority: value, priority_manual: true }
-  }
-
-  const { error } = await supabase
-    .from('proposals')
-    .update(update)
-    .eq('id', id)
-    .eq('organization_id', org.id)
-
-  if (error) return { error: error.message }
-
-  revalidatePath('/proposals')
-  revalidatePath(`/proposals/${id}`)
-  revalidatePath('/dashboard')
-  return { success: true }
+    return { priority: computeProposalPriority(proposal.sent_date, proposal.status), priority_manual: false }
+  })
 }
 
 export async function updateProposalStatusAction(id: string, status: ProposalStatus) {
-  const supabase = await createClient()
-  const org = await getOrganization()
+  const { supabase, org } = await getOrgContext()
   if (!org) return { error: 'Not authenticated' }
 
   const { error } = await supabase
@@ -144,10 +121,9 @@ export async function updateProposalStatusAction(id: string, status: ProposalSta
 
   if (error) return { error: error.message }
 
-  const activityType = status === 'won' ? 'proposal_won' : status === 'lost' ? 'proposal_lost' : 'proposal_updated'
   await logActivity({
     orgId: org.id,
-    type: activityType,
+    type: proposalActivityType(status),
     entityType: 'proposal',
     entityId: id,
     description: `Proposal status changed to: ${status}`,

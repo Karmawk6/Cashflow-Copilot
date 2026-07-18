@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import type { ActivityType, Json } from '@/types/database'
 
 interface LogActivityParams {
@@ -22,7 +22,7 @@ export async function logActivity({
 }: LogActivityParams) {
   try {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getUser()
 
     await supabase.from('activities').insert({
       organization_id: orgId,

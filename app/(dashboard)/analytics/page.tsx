@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { formatCurrency } from '@/lib/utils'
 import { isPastDue } from '@/lib/follow-up-engine/engine'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,9 +7,7 @@ import { TrendingUp, DollarSign, Receipt, FileText, CheckCircle } from 'lucide-r
 export const metadata = { title: 'Analytics' }
 
 export default async function AnalyticsPage() {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/onboarding')
+  const { supabase, org } = await requireOrgOrRedirect('/onboarding')
 
   const [
     { data: invoices },

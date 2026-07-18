@@ -1,5 +1,5 @@
-import { notFound, redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { notFound } from 'next/navigation'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { updateRecurringScheduleAction } from '@/lib/actions/recurring'
 import { RecurringForm } from '@/components/invoices/recurring-form'
 import type { RecurringSchedule } from '@/types/database'
@@ -12,9 +12,7 @@ export default async function EditRecurringPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const [{ data: schedule }, { data: clients }] = await Promise.all([
     supabase

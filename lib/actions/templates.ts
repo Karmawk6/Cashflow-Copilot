@@ -2,13 +2,11 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import type { ActionState, EmailTemplateType, EmailTone } from '@/types/database'
 
 export async function createTemplateAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const data = {
     organization_id: org.id,
@@ -31,9 +29,7 @@ export async function createTemplateAction(_prevState: ActionState, formData: Fo
 }
 
 export async function updateTemplateAction(id: string, _prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const data = {
     name: formData.get('name') as string,
@@ -54,9 +50,7 @@ export async function updateTemplateAction(id: string, _prevState: ActionState, 
 }
 
 export async function deleteTemplateAction(id: string) {
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   await supabase
     .from('email_templates')

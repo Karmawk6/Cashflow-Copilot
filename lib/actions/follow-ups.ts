@@ -1,18 +1,17 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { getOrgContext } from '@/lib/supabase/guards'
 import { logActivity } from './activities'
 import { invoiceNeedsFollowUp, proposalNeedsFollowUp } from '@/lib/follow-up-engine/engine'
 import { syncInvoiceStatusAndPriority, syncProposalStatusAndPriority } from '@/lib/follow-up-engine/sync'
-import type { FollowUpEventStatus, FollowUpEventType, Priority } from '@/types/database'
+import type { Database, FollowUpEventStatus, Priority } from '@/types/database'
 
 export async function updateFollowUpStatusAction(id: string, status: FollowUpEventStatus) {
-  const supabase = await createClient()
-  const org = await getOrganization()
+  const { supabase, org } = await getOrgContext()
   if (!org) return { error: 'Not authenticated' }
 
-  const update: Record<string, unknown> = { status }
+  const update: Database['public']['Tables']['follow_up_events']['Update'] = { status }
   if (status === 'sent' || status === 'completed') {
     update.sent_at = new Date().toISOString()
   }
@@ -40,8 +39,7 @@ export async function updateFollowUpStatusAction(id: string, status: FollowUpEve
 }
 
 export async function updateFollowUpPriorityAction(id: string, priority: Priority) {
-  const supabase = await createClient()
-  const org = await getOrganization()
+  const { supabase, org } = await getOrgContext()
   if (!org) return { error: 'Not authenticated' }
 
   const { error } = await supabase
@@ -58,8 +56,7 @@ export async function updateFollowUpPriorityAction(id: string, priority: Priorit
 }
 
 export async function runFollowUpEngineAction() {
-  const supabase = await createClient()
-  const org = await getOrganization()
+  const { supabase, org } = await getOrgContext()
   if (!org) return { error: 'Not authenticated' }
 
   // Fetch all pending invoices and proposals to compute which need follow-up
@@ -77,16 +74,7 @@ export async function runFollowUpEngineAction() {
   ])
 
   const now = new Date().toISOString()
-  const eventsToCreate: Array<{
-    organization_id: string
-    client_id: string
-    invoice_id?: string
-    proposal_id?: string
-    type: FollowUpEventType
-    status: FollowUpEventStatus
-    priority: Priority
-    due_date: string
-  }> = []
+  const eventsToCreate: Database['public']['Tables']['follow_up_events']['Insert'][] = []
 
   for (const invoice of invoices ?? []) {
     // Same shared sync as the cron — keeps status fresh and respects a

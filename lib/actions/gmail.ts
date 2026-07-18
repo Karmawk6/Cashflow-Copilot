@@ -1,12 +1,12 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, getUser } from '@/lib/supabase/server'
 import { revokeToken } from '@/lib/gmail/oauth'
 
 export async function disconnectGmailAction() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getUser()
   if (!user) return { error: 'Not authenticated' }
 
   const { data: connection } = await supabase

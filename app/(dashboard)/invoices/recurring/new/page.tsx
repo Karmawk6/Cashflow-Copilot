@@ -1,5 +1,4 @@
-import { redirect } from 'next/navigation'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { createRecurringScheduleAction } from '@/lib/actions/recurring'
 import { RecurringForm } from '@/components/invoices/recurring-form'
 
@@ -11,9 +10,7 @@ export default async function NewRecurringPage({
   searchParams: Promise<{ client?: string }>
 }) {
   const { client: defaultClientId } = await searchParams
-  const supabase = await createClient()
-  const org = await getOrganization()
-  if (!org) redirect('/login')
+  const { supabase, org } = await requireOrgOrRedirect('/login')
 
   const { data: clients } = await supabase
     .from('clients')
