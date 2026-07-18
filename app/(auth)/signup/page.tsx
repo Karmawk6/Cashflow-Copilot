@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormError } from '@/components/shared/form-error'
 
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signup, undefined)
@@ -22,11 +23,7 @@ export default function SignupPage() {
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-4">
-          {state?.error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state.error}
-            </div>
-          )}
+          <FormError message={state?.error} />
           <div className="space-y-2">
             <Label htmlFor="fullName">Your name</Label>
             <Input id="fullName" name="fullName" type="text" placeholder="Alex Johnson" required />

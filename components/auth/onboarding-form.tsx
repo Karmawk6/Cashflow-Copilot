@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { FormError } from '@/components/shared/form-error'
 import { UserPlus } from 'lucide-react'
 
 const businessTypes = [
@@ -44,10 +45,7 @@ export function OnboardingForm({
       </CardHeader>
       <CardContent className="space-y-6">
         {inviteError && (
-          <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-            That invitation could not be accepted — it may have been revoked. Ask your
-            workspace owner to re-invite you, or create your own workspace below.
-          </div>
+          <FormError message="That invitation could not be accepted — it may have been revoked. Ask your workspace owner to re-invite you, or create your own workspace below." />
         )}
 
         {invitations.length > 0 && (
@@ -84,11 +82,7 @@ export function OnboardingForm({
         )}
 
         <form action={action} className="space-y-6">
-          {state?.error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state.error}
-            </div>
-          )}
+          <FormError message={state?.error} />
           <div className="space-y-2">
             <Label htmlFor="fullName">Your name</Label>
             <Input id="fullName" name="fullName" type="text" placeholder="Alex Johnson" />

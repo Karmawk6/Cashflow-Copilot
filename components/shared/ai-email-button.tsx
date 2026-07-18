@@ -4,24 +4,9 @@ import { useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AiEmailModal } from './ai-email-modal'
-import type { EmailTemplateType } from '@/types/database'
+import type { EmailContext } from '@/types/database'
 
-interface AiEmailButtonProps {
-  type: EmailTemplateType
-  clientName: string
-  contactName?: string | null
-  clientEmail?: string | null
-  amount?: number
-  currency?: string
-  invoiceNumber?: string
-  proposalTitle?: string
-  dueDate?: string | null
-  sentDate?: string | null
-  daysOverdue?: number
-  paymentLink?: string | null
-}
-
-export function AiEmailButton(props: AiEmailButtonProps) {
+export function AiEmailButton(props: EmailContext) {
   const [open, setOpen] = useState(false)
 
   return (

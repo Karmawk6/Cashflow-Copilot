@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { FormError } from '@/components/shared/form-error'
 import type { Client, RecurringSchedule, RecurringKind, ActionState } from '@/types/database'
 
 interface RecurringFormProps {
@@ -35,11 +36,7 @@ export function RecurringForm({ schedule, clients, action, title, defaultClientI
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-5">
-          {(state as { error?: string })?.error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {(state as { error?: string }).error}
-            </div>
-          )}
+          <FormError message={state?.error} />
 
           {/* Retainer vs payment plan */}
           <div className="space-y-2">

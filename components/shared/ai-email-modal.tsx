@@ -9,27 +9,14 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import type { EmailTone, EmailTemplateType } from '@/types/database'
+import type { EmailTone, EmailContext } from '@/types/database'
 
 type DraftSource = 'template' | 'ai'
 
 interface AiEmailModalProps {
   open: boolean
   onClose: () => void
-  context: {
-    type: EmailTemplateType
-    clientName: string
-    contactName?: string | null
-    clientEmail?: string | null
-    amount?: number
-    currency?: string
-    invoiceNumber?: string
-    proposalTitle?: string
-    dueDate?: string | null
-    sentDate?: string | null
-    daysOverdue?: number
-    paymentLink?: string | null
-  }
+  context: EmailContext
 }
 
 export function AiEmailModal({ open, onClose, context }: AiEmailModalProps) {

@@ -7,21 +7,12 @@ import { PrioritySelect } from '@/components/shared/priority-select'
 import { AiEmailModal } from '@/components/shared/ai-email-modal'
 import { updateFollowUpStatusAction, updateFollowUpPriorityAction } from '@/lib/actions/follow-ups'
 import { toast } from 'sonner'
-import type { Priority } from '@/types/database'
+import type { EmailContext, FollowUpEventType, Priority } from '@/types/database'
 
-interface FollowUpActionsProps {
+interface FollowUpActionsProps extends Omit<EmailContext, 'type' | 'sentDate' | 'daysOverdue'> {
   followUpId: string
-  clientName: string
-  contactName?: string | null
-  clientEmail?: string | null
-  type: 'invoice_reminder' | 'proposal_followup' | 'ghosted_checkin' | 'payment_upcoming'
+  type: FollowUpEventType
   priority: Priority
-  amount?: number
-  currency?: string
-  invoiceNumber?: string
-  proposalTitle?: string
-  dueDate?: string | null
-  paymentLink?: string | null
 }
 
 export function FollowUpActions({

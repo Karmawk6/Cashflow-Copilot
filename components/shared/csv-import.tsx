@@ -18,6 +18,12 @@ interface FieldDef {
   aliases: string[]
 }
 
+const csvTemplates: Record<ImportType, string> = {
+  clients: 'company_name,contact_name,email,phone,status,notes\nAcme Corp,Jane Smith,jane@acme.com,555-1234,active,',
+  invoices: 'company_name,invoice_number,title,amount,issue_date,due_date,status\nAcme Corp,INV-001,Web work,5000,2025-01-01,2025-01-30,sent',
+  proposals: 'company_name,title,proposal_number,amount,sent_date,status\nAcme Corp,Brand Strategy,PROP-001,12000,2025-01-01,sent',
+}
+
 const fieldDefs: Record<ImportType, FieldDef[]> = {
   clients: [
     { key: 'company_name', label: 'Company name', required: true, aliases: ['company_name', 'company', 'business_name', 'business', 'organization', 'organisation', 'client_name', 'client', 'account', 'name'] },
@@ -172,12 +178,6 @@ export function CsvImport() {
     } finally {
       setUploading(false)
     }
-  }
-
-  const csvTemplates: Record<string, string> = {
-    clients: 'company_name,contact_name,email,phone,status,notes\nAcme Corp,Jane Smith,jane@acme.com,555-1234,active,',
-    invoices: 'company_name,invoice_number,title,amount,issue_date,due_date,status\nAcme Corp,INV-001,Web work,5000,2025-01-01,2025-01-30,sent',
-    proposals: 'company_name,title,proposal_number,amount,sent_date,status\nAcme Corp,Brand Strategy,PROP-001,12000,2025-01-01,sent',
   }
 
   const downloadTemplate = () => {

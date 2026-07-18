@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormError } from '@/components/shared/form-error'
 
 // Messages arriving via redirect (signup flow, email-confirmation link).
 const notices: Record<string, { text: string; tone: 'info' | 'error' }> = {
@@ -30,15 +31,10 @@ function AuthNotice() {
   const key = searchParams.get('notice') ?? searchParams.get('error')
   const notice = key ? notices[key] : undefined
   if (!notice) return null
+  if (notice.tone === 'error') return <FormError message={notice.text} />
 
   return (
-    <div
-      className={
-        notice.tone === 'error'
-          ? 'rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive'
-          : 'rounded-md bg-primary/10 px-3 py-2 text-sm text-primary'
-      }
-    >
+    <div className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
       {notice.text}
     </div>
   )
@@ -58,11 +54,7 @@ export default function LoginPage() {
           <Suspense>
             <AuthNotice />
           </Suspense>
-          {state?.error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {state.error}
-            </div>
-          )}
+          <FormError message={state?.error} />
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" name="email" type="email" placeholder="you@agency.com" required autoComplete="email" />

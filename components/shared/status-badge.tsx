@@ -1,7 +1,10 @@
 import { Badge } from '@/components/ui/badge'
 import type { InvoiceStatus, ProposalStatus, ClientStatus } from '@/types/database'
 
-const invoiceStatusConfig: Record<InvoiceStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' }> = {
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning'
+type StatusConfig<T extends string> = Record<T, { label: string; variant: BadgeVariant }>
+
+const invoiceStatusConfig: StatusConfig<InvoiceStatus> = {
   draft: { label: 'Draft', variant: 'secondary' },
   sent: { label: 'Sent', variant: 'default' },
   paid: { label: 'Paid', variant: 'success' },
@@ -10,7 +13,7 @@ const invoiceStatusConfig: Record<InvoiceStatus, { label: string; variant: 'defa
   cancelled: { label: 'Cancelled', variant: 'outline' },
 }
 
-const proposalStatusConfig: Record<ProposalStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' }> = {
+const proposalStatusConfig: StatusConfig<ProposalStatus> = {
   draft: { label: 'Draft', variant: 'secondary' },
   sent: { label: 'Sent', variant: 'default' },
   viewed: { label: 'Viewed', variant: 'default' },
@@ -19,7 +22,7 @@ const proposalStatusConfig: Record<ProposalStatus, { label: string; variant: 'de
   lost: { label: 'Lost', variant: 'outline' },
 }
 
-const clientStatusConfig: Record<ClientStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' }> = {
+const clientStatusConfig: StatusConfig<ClientStatus> = {
   active: { label: 'Active', variant: 'success' },
   inactive: { label: 'Inactive', variant: 'secondary' },
   ghosted: { label: 'Ghosted', variant: 'destructive' },

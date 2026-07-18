@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FormError } from '@/components/shared/form-error'
 import type { Client, Invoice, ActionState } from '@/types/database'
 
 interface InvoiceFormProps {
@@ -30,11 +31,7 @@ export function InvoiceForm({ invoice, clients, action, title, defaultClientId }
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-5">
-          {(state as { error?: string })?.error && (
-            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {(state as { error?: string }).error}
-            </div>
-          )}
+          <FormError message={state?.error} />
 
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1.5">

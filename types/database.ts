@@ -339,4 +339,20 @@ export interface RecurringScheduleWithClient extends RecurringSchedule {
   client: Pick<Client, 'company_name' | 'contact_name' | 'email'>
 }
 
+// Everything the email draft modal can mention — templates and AI both fill from this.
+export interface EmailContext {
+  type: EmailTemplateType
+  clientName: string
+  contactName?: string | null
+  clientEmail?: string | null
+  amount?: number
+  currency?: string
+  invoiceNumber?: string
+  proposalTitle?: string
+  dueDate?: string | null
+  sentDate?: string | null
+  daysOverdue?: number
+  paymentLink?: string | null
+}
+
 export type ActionState = { error?: string; success?: boolean } | undefined
