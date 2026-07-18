@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { requireOrgOrRedirect } from '@/lib/supabase/guards'
 import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
-import { formatCurrency, formatDate, daysAgo, isOverdue } from '@/lib/utils'
+import { isPastDue } from '@/lib/follow-up-engine/engine'
+import { formatCurrency, formatDate, daysAgo } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { InvoiceStatusBadge } from '@/components/shared/status-badge'
 import { PrioritySelect } from '@/components/shared/priority-select'
@@ -43,7 +44,7 @@ export default async function InvoicesPage({
     .filter((i) => i.status !== 'paid' && i.status !== 'cancelled' && i.status !== 'draft')
     .reduce((sum, i) => sum + (i.amount - i.amount_paid), 0)
 
-  const overdueCount = (invoices ?? []).filter((i) => isOverdue(i.due_date) && i.status !== 'paid' && i.status !== 'cancelled').length
+  const overdueCount = (invoices ?? []).filter((i) => isPastDue(i.due_date) && i.status !== 'paid' && i.status !== 'cancelled').length
 
   const activeSchedules = (schedules ?? []).filter((s) => s.status === 'active')
   const recurringMonthly = activeSchedules
@@ -114,8 +115,10 @@ export default async function InvoicesPage({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(invoices ?? []).map((invoice) => (
-                    <TableRow key={invoice.id} className={isOverdue(invoice.due_date) && invoice.status !== 'paid' ? 'bg-destructive/5' : ''}>
+                  {(invoices ?? []).map((invoice) => {
+                    const overdue = isPastDue(invoice.due_date) && invoice.status !== 'paid'
+                    return (
+                    <TableRow key={invoice.id} className={overdue ? 'bg-destructive/5' : ''}>
                       <TableCell>
                         <div>
                           <div className="font-medium flex items-center gap-1.5">
@@ -147,10 +150,10 @@ export default async function InvoicesPage({
                         />
                       </TableCell>
                       <TableCell className="text-sm">
-                        <div className={isOverdue(invoice.due_date) && invoice.status !== 'paid' ? 'text-destructive font-medium' : 'text-muted-foreground'}>
+                        <div className={overdue ? 'text-destructive font-medium' : 'text-muted-foreground'}>
                           {formatDate(invoice.due_date)}
                         </div>
-                        {isOverdue(invoice.due_date) && invoice.status !== 'paid' && (
+                        {overdue && (
                           <div className="text-xs text-destructive">{daysAgo(invoice.due_date)}d overdue</div>
                         )}
                       </TableCell>
@@ -160,7 +163,8 @@ export default async function InvoicesPage({
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    )
+                  })}
                 </TableBody>
               </Table>
             </div>

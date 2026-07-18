@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
+import { jsonError } from '@/lib/api/http'
 import Papa from 'papaparse'
+import type { ClientStatus, InvoiceStatus, ProposalStatus } from '@/types/database'
 
 type ImportType = 'clients' | 'invoices' | 'proposals'
 
@@ -27,11 +29,11 @@ function amountFrom(row: Record<string, string>): string {
 
 export async function POST(request: Request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getUser()
+  if (!user) return jsonError('Unauthorized', 401)
 
   const org = await getOrganization()
-  if (!org) return NextResponse.json({ error: 'No organization' }, { status: 400 })
+  if (!org) return jsonError('No organization', 400)
 
   // Two entry modes: JSON with pre-mapped canonical rows (from the column-mapper
   // UI), or a raw CSV file upload that relies on header-alias guessing.
@@ -45,10 +47,10 @@ export async function POST(request: Request) {
     type = body?.type
     const rawRows = body?.rows
     if (!type || !['clients', 'invoices', 'proposals'].includes(type) || !Array.isArray(rawRows)) {
-      return NextResponse.json({ error: 'Missing type or rows' }, { status: 400 })
+      return jsonError('Missing type or rows', 400)
     }
     if (rawRows.length > MAX_ROWS) {
-      return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 413 })
+      return jsonError(`Too many rows (max ${MAX_ROWS})`, 413)
     }
     rows = rawRows.filter((r): r is Record<string, string> => typeof r === 'object' && r !== null)
     detectedHeaders = rows.length > 0 ? Object.keys(rows[0]) : []
@@ -58,11 +60,11 @@ export async function POST(request: Request) {
     type = formData.get('type') as ImportType
 
     if (!file || !type) {
-      return NextResponse.json({ error: 'Missing file or type' }, { status: 400 })
+      return jsonError('Missing file or type', 400)
     }
 
     if (file.size > MAX_FILE_BYTES) {
-      return NextResponse.json({ error: 'File too large (max 2MB)' }, { status: 413 })
+      return jsonError('File too large (max 2MB)', 413)
     }
 
     const text = await file.text()
@@ -73,11 +75,11 @@ export async function POST(request: Request) {
     })
 
     if (errors.length > 0) {
-      return NextResponse.json({ error: 'CSV parse error: ' + errors[0].message }, { status: 400 })
+      return jsonError('CSV parse error: ' + errors[0].message, 400)
     }
 
     if ((data as unknown[]).length > MAX_ROWS) {
-      return NextResponse.json({ error: `Too many rows (max ${MAX_ROWS})` }, { status: 413 })
+      return jsonError(`Too many rows (max ${MAX_ROWS})`, 413)
     }
 
     rows = data as Record<string, string>[]
@@ -107,7 +109,7 @@ export async function POST(request: Request) {
           email: row.email || null,
           phone: row.phone || null,
           website: row.website || null,
-          status: (['active', 'inactive', 'ghosted', 'prospect'].includes(row.status) ? row.status : 'active') as 'active' | 'inactive' | 'ghosted' | 'prospect',
+          status: (['active', 'inactive', 'ghosted', 'prospect'].includes(row.status) ? row.status : 'active') as ClientStatus,
           notes: row.notes || null,
         })
         if (error) { failedRows.push(i + 2); continue }
@@ -141,7 +143,7 @@ export async function POST(request: Request) {
           amount_paid: parseFloat((row.amount_paid || row.paid || '0').replace(/[$,]/g, '')) || 0,
           issue_date: row.issue_date || row.date || new Date().toISOString().split('T')[0],
           due_date: dueDate,
-          status: (['draft','sent','paid','overdue','partially_paid','cancelled'].includes(row.status) ? row.status : 'sent') as 'draft' | 'sent' | 'paid' | 'overdue' | 'partially_paid' | 'cancelled',
+          status: (['draft','sent','paid','overdue','partially_paid','cancelled'].includes(row.status) ? row.status : 'sent') as InvoiceStatus,
           notes: row.notes || null,
         })
         if (error) { failedRows.push(i + 2); continue }
@@ -173,7 +175,7 @@ export async function POST(request: Request) {
           amount: parseFloat(amount.replace(/[$,]/g, '')) || 0,
           sent_date: row.sent_date || row.date || null,
           expiration_date: row.expiration_date || row.expires || null,
-          status: (['draft','sent','viewed','follow_up_due','won','lost'].includes(row.status) ? row.status : 'sent') as 'draft' | 'sent' | 'viewed' | 'follow_up_due' | 'won' | 'lost',
+          status: (['draft','sent','viewed','follow_up_due','won','lost'].includes(row.status) ? row.status : 'sent') as ProposalStatus,
           notes: row.notes || null,
         })
         if (error) { failedRows.push(i + 2); continue }

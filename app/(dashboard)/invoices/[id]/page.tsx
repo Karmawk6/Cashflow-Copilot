@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { requireOrgOrRedirect } from '@/lib/supabase/guards'
-import { formatCurrency, formatDate, daysAgo, isOverdue } from '@/lib/utils'
+import { formatCurrency, formatDate, daysAgo } from '@/lib/utils'
+import { isPastDue } from '@/lib/follow-up-engine/engine'
 import { updateInvoiceAction } from '@/lib/actions/invoices'
 import { InvoiceForm } from '@/components/invoices/invoice-form'
 import { Button } from '@/components/ui/button'
@@ -39,7 +40,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
 
   const updateAction = updateInvoiceAction.bind(null, id)
   const client = invoice.client as unknown as { company_name: string; contact_name?: string; email?: string; payment_link?: string } | null
-  const overdue = isOverdue(invoice.due_date) && invoice.status !== 'paid'
+  const overdue = isPastDue(invoice.due_date) && invoice.status !== 'paid'
   const daysOverdueCount = overdue ? daysAgo(invoice.due_date) : 0
 
   return (

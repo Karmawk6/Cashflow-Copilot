@@ -1,6 +1,6 @@
 import OpenAI from 'openai'
 import type { EmailTemplateType, EmailTone } from '@/types/database'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDateLong } from '@/lib/utils'
 
 interface GenerateEmailParams {
   type: EmailTemplateType
@@ -52,8 +52,8 @@ export async function generateEmail(params: GenerateEmailParams): Promise<{ subj
     amountStr ? `Amount: ${amountStr}` : null,
     params.invoiceNumber ? `Invoice number: ${params.invoiceNumber}` : null,
     params.proposalTitle ? `Proposal: ${params.proposalTitle}` : null,
-    params.dueDate ? `Due date: ${new Date(params.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : null,
-    params.sentDate ? `Sent date: ${new Date(params.sentDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : null,
+    params.dueDate ? `Due date: ${formatDateLong(params.dueDate)}` : null,
+    params.sentDate ? `Sent date: ${formatDateLong(params.sentDate)}` : null,
     overdueStr ? `Status: ${overdueStr}` : null,
     params.paymentLink ? `Payment link: ${params.paymentLink}` : null,
     params.senderName ? `Sender: ${params.senderName}` : null,
@@ -110,7 +110,7 @@ function generateDemoEmail(params: GenerateEmailParams): { subject: string; body
     },
     invoice_reminder: {
       subject: `Invoice ${params.invoiceNumber ?? '#'} — Payment Reminder`,
-      body: `Hi ${params.clientName},\n\nI hope all is well! I'm reaching out regarding Invoice ${params.invoiceNumber ?? '#'} for ${amountStr}${params.dueDate ? `, due ${new Date(params.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}` : ''}.\n\nIf you've already sent payment, please disregard this message. Otherwise, I'd appreciate it if you could arrange payment at your convenience.${params.paymentLink ? `\n\nYou can pay securely here: ${params.paymentLink}` : ''}\n\nThank you!\n\n${params.senderName ?? 'Your Name'}`,
+      body: `Hi ${params.clientName},\n\nI hope all is well! I'm reaching out regarding Invoice ${params.invoiceNumber ?? '#'} for ${amountStr}${params.dueDate ? `, due ${formatDateLong(params.dueDate, { year: false })}` : ''}.\n\nIf you've already sent payment, please disregard this message. Otherwise, I'd appreciate it if you could arrange payment at your convenience.${params.paymentLink ? `\n\nYou can pay securely here: ${params.paymentLink}` : ''}\n\nThank you!\n\n${params.senderName ?? 'Your Name'}`,
     },
     second_reminder: {
       subject: `Second Notice: Invoice ${params.invoiceNumber ?? '#'} — ${params.daysOverdue ?? 'Several'} Days Overdue`,
@@ -125,8 +125,8 @@ function generateDemoEmail(params: GenerateEmailParams): { subject: string; body
       body: `Hi ${params.clientName},\n\nI wanted to reach out since we haven't connected in a while. Totally understand things get busy — just wanted to check in and see if you're still interested in moving forward.\n\nIf the timing isn't right or you've decided to go in a different direction, no worries at all. Just let me know either way so I can update my records.\n\nHope to hear from you!\n\n${params.senderName ?? 'Your Name'}`,
     },
     payment_upcoming: {
-      subject: `Upcoming payment: Invoice ${params.invoiceNumber ?? '#'}${params.dueDate ? ` due ${new Date(params.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}` : ''}`,
-      body: `Hi ${params.clientName},\n\nJust a friendly heads-up that your next payment of ${amountStr} (Invoice ${params.invoiceNumber ?? '#'}) is coming up${params.dueDate ? `, due ${new Date(params.dueDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}` : ''}.\n\nIf your payment is already on the way, no action is needed — thank you! Otherwise, you can arrange it at your convenience.${params.paymentLink ? `\n\nYou can pay securely here: ${params.paymentLink}` : ''}\n\nThanks as always,\n${params.senderName ?? 'Your Name'}`,
+      subject: `Upcoming payment: Invoice ${params.invoiceNumber ?? '#'}${params.dueDate ? ` due ${formatDateLong(params.dueDate, { year: false })}` : ''}`,
+      body: `Hi ${params.clientName},\n\nJust a friendly heads-up that your next payment of ${amountStr} (Invoice ${params.invoiceNumber ?? '#'}) is coming up${params.dueDate ? `, due ${formatDateLong(params.dueDate, { year: false })}` : ''}.\n\nIf your payment is already on the way, no action is needed — thank you! Otherwise, you can arrange it at your convenience.${params.paymentLink ? `\n\nYou can pay securely here: ${params.paymentLink}` : ''}\n\nThanks as always,\n${params.senderName ?? 'Your Name'}`,
     },
   }
 

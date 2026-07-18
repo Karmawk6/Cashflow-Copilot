@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
+import { jsonError } from '@/lib/api/http'
 
 // Demo data is org-scoped, so any authenticated account may load it in any
 // environment. Clients are tagged 'demo' and activities carry metadata.demo
@@ -7,11 +8,11 @@ import { createClient, getOrganization } from '@/lib/supabase/server'
 
 export async function POST() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getUser()
+  if (!user) return jsonError('Unauthorized', 401)
 
   const org = await getOrganization()
-  if (!org) return NextResponse.json({ error: 'No organization' }, { status: 400 })
+  if (!org) return jsonError('No organization', 400)
 
   const { data: existing } = await supabase
     .from('clients')
@@ -21,10 +22,7 @@ export async function POST() {
     .limit(1)
 
   if (existing && existing.length > 0) {
-    return NextResponse.json(
-      { error: 'Demo data is already loaded. Clear it before loading again.' },
-      { status: 409 }
-    )
+    return jsonError('Demo data is already loaded. Clear it before loading again.', 409)
   }
 
   const now = new Date()
@@ -38,7 +36,7 @@ export async function POST() {
     { organization_id: org.id, company_name: 'Cascade Media Group', contact_name: 'Lisa Park', email: 'lisa@cascade.example.com', status: 'prospect', last_contact_date: daysAgo(8), tags: ['demo'] },
   ]).select()
 
-  if (!clients) return NextResponse.json({ error: 'Failed to create clients' }, { status: 500 })
+  if (!clients) return jsonError('Failed to create clients', 500)
 
   const [meridian, bluestone, vertex, harlow, cascade] = clients
 
@@ -142,11 +140,11 @@ export async function POST() {
 
 export async function DELETE() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getUser()
+  if (!user) return jsonError('Unauthorized', 401)
 
   const org = await getOrganization()
-  if (!org) return NextResponse.json({ error: 'No organization' }, { status: 400 })
+  if (!org) return jsonError('No organization', 400)
 
   const { data: demoClients } = await supabase
     .from('clients')

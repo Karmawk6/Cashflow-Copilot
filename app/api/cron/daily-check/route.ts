@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { jsonError } from '@/lib/api/http'
 import {
   invoiceNeedsFollowUp,
   proposalNeedsFollowUp,
 } from '@/lib/follow-up-engine/engine'
 import { generateDueInvoices } from '@/lib/follow-up-engine/recurring'
 import { syncInvoiceStatusAndPriority, syncProposalStatusAndPriority } from '@/lib/follow-up-engine/sync'
-import type { Database, RecurringSchedule } from '@/types/database'
+import type { RecurringSchedule } from '@/types/database'
 
 // Vercel Cron: configured in vercel.json, runs daily.
 // Vercel sends `Authorization: Bearer ${CRON_SECRET}`; the x-cron-secret header
@@ -18,22 +19,16 @@ export async function GET(request: Request) {
   const bearer = request.headers.get('authorization')
   const legacy = request.headers.get('x-cron-secret')
   if (!secret || (bearer !== `Bearer ${secret}` && legacy !== secret)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return jsonError('Unauthorized', 401)
   }
 
   // The cron has no user session, so RLS would hide every row from the anon
   // key. It must use the service-role key (server-only env var).
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!serviceKey) {
-    return NextResponse.json(
-      { error: 'SUPABASE_SERVICE_ROLE_KEY is not set — the cron cannot read any data without it' },
-      { status: 500 }
-    )
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return jsonError('SUPABASE_SERVICE_ROLE_KEY is not set — the cron cannot read any data without it', 500)
   }
 
-  const supabase = createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, {
-    auth: { persistSession: false },
-  })
+  const supabase = createAdminClient()
 
   const { data: organizations } = await supabase.from('organizations').select('id')
   if (!organizations) return NextResponse.json({ processed: 0 })

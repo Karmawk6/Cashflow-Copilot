@@ -43,12 +43,13 @@ export function daysUntil(date: string | Date | null | undefined): number {
   return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
 }
 
-export function isOverdue(dueDate: string | Date | null | undefined): boolean {
-  if (!dueDate) return false
-  // Date-only: due TODAY is not overdue — comparing raw Dates would flag an
-  // invoice overdue at midnight UTC on its own due date ("0d overdue").
-  const d = typeof dueDate === 'string' ? dueDate.split('T')[0] : dueDate.toISOString().split('T')[0]
-  return d < new Date().toISOString().split('T')[0]
+/** Long-month date for client-facing email copy — formatDate stays short-month for the UI. */
+export function formatDateLong(date: string, opts: { year?: boolean } = {}): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    ...(opts.year === false ? {} : { year: 'numeric' }),
+  })
 }
 
 export function slugify(text: string): string {

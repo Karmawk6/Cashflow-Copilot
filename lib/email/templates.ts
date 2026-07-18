@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, EmailTemplate, EmailTemplateType, EmailTone } from '@/types/database'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDateLong } from '@/lib/utils'
 
 export interface TemplateFillParams {
   clientName: string
@@ -39,9 +39,6 @@ export async function pickTemplate(
   return [...candidates].sort((a, b) => rank(a as EmailTemplate) - rank(b as EmailTemplate))[0] as EmailTemplate
 }
 
-const prettyDate = (d: string) =>
-  new Date(d).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
-
 /**
  * Fill the {{placeholder}} conventions used by the seeded templates:
  * simple {{name}} substitution plus {{#payment_link}}...{{/payment_link}}
@@ -62,8 +59,8 @@ export function fillTemplate(text: string, params: TemplateFillParams): string {
     invoice_number: params.invoiceNumber ?? '',
     proposal_title: params.proposalTitle ?? '',
     amount: params.amount != null ? formatCurrency(params.amount, params.currency) : '',
-    due_date: params.dueDate ? prettyDate(params.dueDate) : '',
-    sent_date: params.sentDate ? prettyDate(params.sentDate) : '',
+    due_date: params.dueDate ? formatDateLong(params.dueDate) : '',
+    sent_date: params.sentDate ? formatDateLong(params.sentDate) : '',
     payment_link: params.paymentLink ?? '',
     sender_name: params.senderName || 'The team',
   }

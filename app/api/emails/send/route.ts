@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
+import { jsonError, rateLimited } from '@/lib/api/http'
 import { sendEmail } from '@/lib/email/send'
 import { sendViaGmail } from '@/lib/gmail/send'
 import { logActivity } from '@/lib/actions/activities'
@@ -15,19 +16,13 @@ const ORG_SENDS_PER_HOUR = 30
 
 export async function POST(request: Request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const user = await getUser()
+  if (!user) return jsonError('Unauthorized', 401)
 
   // Burst throttle per user (in-memory, first line of defense)
   const limited = rateLimit(`send:${user.id}`, 15, 60_000)
   if (!limited.ok) {
-    return NextResponse.json(
-      { error: 'Sending too fast — wait a moment and try again' },
-      { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } }
-    )
+    return rateLimited('Sending too fast — wait a moment and try again', limited.retryAfterSeconds)
   }
 
   try {
@@ -35,19 +30,17 @@ export async function POST(request: Request) {
     const { to, subject, body: emailBody, context } = body
 
     if (!to || !subject || !emailBody) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return jsonError('Missing required fields', 400)
     }
     if (typeof to !== 'string' || typeof subject !== 'string' || typeof emailBody !== 'string') {
-      return NextResponse.json({ error: 'Invalid field types' }, { status: 400 })
+      return jsonError('Invalid field types', 400)
     }
     if (subject.length > MAX_SUBJECT || emailBody.length > MAX_BODY) {
-      return NextResponse.json({ error: 'Subject or body is too long' }, { status: 413 })
+      return jsonError('Subject or body is too long', 413)
     }
 
     const org = await getOrganization()
-    if (!org) {
-      return NextResponse.json({ error: 'No organization' }, { status: 403 })
-    }
+    if (!org) return jsonError('No organization', 403)
 
     const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
     const { count: recentSends } = await supabase
@@ -58,10 +51,7 @@ export async function POST(request: Request) {
       .gte('created_at', hourAgo)
 
     if ((recentSends ?? 0) >= ORG_SENDS_PER_HOUR) {
-      return NextResponse.json(
-        { error: `Your workspace hit its hourly sending limit (${ORG_SENDS_PER_HOUR}/hour). This protects your sender reputation — try again shortly.` },
-        { status: 429 }
-      )
+      return jsonError(`Your workspace hit its hourly sending limit (${ORG_SENDS_PER_HOUR}/hour). This protects your sender reputation — try again shortly.`, 429)
     }
 
     // Only allow sending to a client of the caller's org — otherwise any
@@ -75,10 +65,7 @@ export async function POST(request: Request) {
       .maybeSingle()
 
     if (!recipient) {
-      return NextResponse.json(
-        { error: 'Recipient must be the email address of one of your clients' },
-        { status: 403 }
-      )
+      return jsonError('Recipient must be the email address of one of your clients', 403)
     }
 
     // Prefer the sender's own Gmail when connected — better deliverability and
@@ -134,6 +121,6 @@ export async function POST(request: Request) {
     return NextResponse.json(result)
   } catch (error) {
     console.error('Email send error:', error)
-    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
+    return jsonError('Failed to send email', 500)
   }
 }

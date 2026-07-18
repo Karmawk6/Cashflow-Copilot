@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { createClient, getOrganization } from '@/lib/supabase/server'
+import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
+import { jsonError, rateLimited } from '@/lib/api/http'
 import { generateEmail } from '@/lib/ai/generate-email'
 import { fillTemplate, pickTemplate } from '@/lib/email/templates'
 import { rateLimit } from '@/lib/rate-limit'
@@ -10,25 +11,19 @@ const MAX_FIELD = 500
 
 export async function POST(request: Request) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const user = await getUser()
+  if (!user) return jsonError('Unauthorized', 401)
 
   // AI drafting costs real money per call — throttle bursts per user.
   const limited = rateLimit(`ai:${user.id}`, 10, 60_000)
   if (!limited.ok) {
-    return NextResponse.json(
-      { error: 'Too many drafts at once — give it a few seconds and try again' },
-      { status: 429, headers: { 'Retry-After': String(limited.retryAfterSeconds) } }
-    )
+    return rateLimited('Too many drafts at once — give it a few seconds and try again', limited.retryAfterSeconds)
   }
 
   try {
     const body = await request.json()
     if (typeof body !== 'object' || body === null || Array.isArray(body)) {
-      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+      return jsonError('Invalid request body', 400)
     }
     for (const [k, v] of Object.entries(body)) {
       if (typeof v === 'string' && v.length > MAX_FIELD) body[k] = v.slice(0, MAX_FIELD)
@@ -49,14 +44,11 @@ export async function POST(request: Request) {
     // AI mode remains for when the user wants something bespoke.
     if (body.source === 'template') {
       const org = await getOrganization()
-      if (!org) return NextResponse.json({ error: 'No organization' }, { status: 403 })
+      if (!org) return jsonError('No organization', 403)
 
       const template = await pickTemplate(supabase, org.id, body.type, body.tone ?? 'professional')
       if (!template) {
-        return NextResponse.json(
-          { error: 'No template exists for this situation yet — add one under Templates' },
-          { status: 404 }
-        )
+        return jsonError('No template exists for this situation yet — add one under Templates', 404)
       }
 
       return NextResponse.json({
@@ -71,6 +63,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ...result, source: 'ai' })
   } catch (error) {
     console.error('Email draft error:', error)
-    return NextResponse.json({ error: 'Failed to generate email' }, { status: 500 })
+    return jsonError('Failed to generate email', 500)
   }
 }
