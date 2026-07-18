@@ -1,23 +1,18 @@
 'use client'
 
-import { useTransition } from 'react'
 import Link from 'next/link'
 import { Pause, Play, XCircle, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { pauseScheduleAction, resumeScheduleAction, cancelScheduleAction } from '@/lib/actions/recurring'
+import { useRunAction } from '@/lib/hooks/use-run-action'
 import { toast } from 'sonner'
 import type { RecurringStatus } from '@/types/database'
 
 export function ScheduleActions({ scheduleId, status }: { scheduleId: string; status: RecurringStatus }) {
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run: runAction } = useRunAction()
 
-  const run = (action: () => Promise<{ error?: string; success?: boolean }>, successMessage: string) => {
-    startTransition(async () => {
-      const result = await action()
-      if (result?.error) toast.error(result.error)
-      else toast.success(successMessage)
-    })
-  }
+  const run = (action: () => Promise<{ error?: string; success?: boolean }>, successMessage: string) =>
+    runAction(action, () => toast.success(successMessage))
 
   return (
     <div className="flex items-center justify-end gap-1">

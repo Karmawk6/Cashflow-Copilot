@@ -1,24 +1,16 @@
 'use client'
 
-import { useTransition } from 'react'
 import { CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { markInvoicePaidAction } from '@/lib/actions/invoices'
+import { useRunAction } from '@/lib/hooks/use-run-action'
 import { toast } from 'sonner'
 
 export function MarkPaidButton({ invoiceId }: { invoiceId: string }) {
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run } = useRunAction()
 
-  const handleClick = () => {
-    startTransition(async () => {
-      const result = await markInvoicePaidAction(invoiceId)
-      if (result?.error) {
-        toast.error(result.error)
-      } else {
-        toast.success('Invoice marked as paid!')
-      }
-    })
-  }
+  const handleClick = () =>
+    run(() => markInvoicePaidAction(invoiceId), () => toast.success('Invoice marked as paid!'))
 
   return (
     <Button variant="outline" size="sm" onClick={handleClick} disabled={isPending}>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,19 +12,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { deleteInvoiceAction } from '@/lib/actions/invoices'
-import { toast } from 'sonner'
+import { useRunAction } from '@/lib/hooks/use-run-action'
 
 export function DeleteInvoiceButton({ invoiceId, invoiceNumber }: { invoiceId: string; invoiceNumber: string }) {
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run } = useRunAction()
 
-  const handleDelete = () => {
-    startTransition(async () => {
-      const result = await deleteInvoiceAction(invoiceId)
-      // deleteInvoiceAction redirects on success, so we only land here on failure
-      if (result?.error) toast.error(result.error)
-    })
-  }
+  // deleteInvoiceAction redirects on success, so no success handler here —
+  // the dialog stays open until the redirect lands.
+  const handleDelete = () => run(() => deleteInvoiceAction(invoiceId))
 
   return (
     <>

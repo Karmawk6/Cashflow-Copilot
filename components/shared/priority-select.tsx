@@ -1,8 +1,7 @@
 'use client'
 
-import { useTransition } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { toast } from 'sonner'
+import { useRunAction } from '@/lib/hooks/use-run-action'
 import { cn } from '@/lib/utils'
 import type { Priority } from '@/types/database'
 
@@ -26,14 +25,9 @@ interface PrioritySelectProps {
  *  server-provided value: picking "auto" shows the recomputed level once the
  *  action's revalidate lands. */
 export function PrioritySelect({ priority, action, autoLabel }: PrioritySelectProps) {
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run } = useRunAction()
 
-  const change = (value: string) => {
-    startTransition(async () => {
-      const result = await action(value as Priority | 'auto')
-      if (result?.error) toast.error(result.error)
-    })
-  }
+  const change = (value: string) => run(() => action(value as Priority | 'auto'))
 
   return (
     <Select value={priority} onValueChange={change} disabled={isPending}>

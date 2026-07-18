@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useTransition } from 'react'
+import { useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Mail, Unplug, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { disconnectGmailAction } from '@/lib/actions/gmail'
+import { useRunAction } from '@/lib/hooks/use-run-action'
 import { toast } from 'sonner'
 
 interface GmailConnectionCardProps {
@@ -22,7 +23,7 @@ const callbackMessages: Record<string, { kind: 'success' | 'error'; text: string
 }
 
 export function GmailConnectionCard({ configured, connection }: GmailConnectionCardProps) {
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run } = useRunAction()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -38,13 +39,8 @@ export function GmailConnectionCard({ configured, connection }: GmailConnectionC
     router.replace('/settings', { scroll: false })
   }, [searchParams, router])
 
-  const disconnect = () => {
-    startTransition(async () => {
-      const result = await disconnectGmailAction()
-      if (result?.error) toast.error(result.error)
-      else toast.success('Gmail disconnected — emails fall back to the platform sender')
-    })
-  }
+  const disconnect = () =>
+    run(() => disconnectGmailAction(), () => toast.success('Gmail disconnected — emails fall back to the platform sender'))
 
   return (
     <Card>

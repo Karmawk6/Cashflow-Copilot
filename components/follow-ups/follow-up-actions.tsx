@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { CheckCircle, SkipForward } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { PrioritySelect } from '@/components/shared/priority-select'
 import { AiEmailModal } from '@/components/shared/ai-email-modal'
 import { updateFollowUpStatusAction, updateFollowUpPriorityAction } from '@/lib/actions/follow-ups'
+import { useRunAction } from '@/lib/hooks/use-run-action'
 import { toast } from 'sonner'
 import type { EmailContext, FollowUpEventType, Priority } from '@/types/database'
 
@@ -30,23 +31,13 @@ export function FollowUpActions({
   paymentLink,
 }: FollowUpActionsProps) {
   const [modalOpen, setModalOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run } = useRunAction()
 
-  const markComplete = () => {
-    startTransition(async () => {
-      const result = await updateFollowUpStatusAction(followUpId, 'completed')
-      if (result?.error) toast.error(result.error)
-      else toast.success('Follow-up completed!')
-    })
-  }
+  const markComplete = () =>
+    run(() => updateFollowUpStatusAction(followUpId, 'completed'), () => toast.success('Follow-up completed!'))
 
-  const skip = () => {
-    startTransition(async () => {
-      const result = await updateFollowUpStatusAction(followUpId, 'skipped')
-      if (result?.error) toast.error(result.error)
-      else toast('Follow-up skipped')
-    })
-  }
+  const skip = () =>
+    run(() => updateFollowUpStatusAction(followUpId, 'skipped'), () => toast('Follow-up skipped'))
 
   return (
     <>

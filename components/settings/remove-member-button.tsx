@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { UserMinus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,23 +12,18 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { removeTeamMember } from '@/lib/actions/team'
+import { useRunAction } from '@/lib/hooks/use-run-action'
 import { toast } from 'sonner'
 
 export function RemoveMemberButton({ memberId, memberLabel }: { memberId: string; memberLabel: string }) {
   const [open, setOpen] = useState(false)
-  const [isPending, startTransition] = useTransition()
+  const { isPending, run } = useRunAction()
 
-  const handleRemove = () => {
-    startTransition(async () => {
-      const result = await removeTeamMember(memberId)
-      if (result?.error) {
-        toast.error(result.error)
-      } else {
-        toast.success(`${memberLabel} was removed from the workspace`)
-        setOpen(false)
-      }
+  const handleRemove = () =>
+    run(() => removeTeamMember(memberId), () => {
+      toast.success(`${memberLabel} was removed from the workspace`)
+      setOpen(false)
     })
-  }
 
   return (
     <>
