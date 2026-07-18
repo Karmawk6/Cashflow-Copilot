@@ -2,11 +2,10 @@ import Link from 'next/link'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { ClientStatusBadge } from '@/components/shared/status-badge'
 import { EmptyState } from '@/components/shared/empty-state'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Plus, Users, Mail, Building2 } from 'lucide-react'
+import { Plus, Users, Mail } from 'lucide-react'
 import { redirect } from 'next/navigation'
 
 export const metadata = { title: 'Clients' }

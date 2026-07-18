@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { formatCurrency, formatDate, daysAgo, isOverdue } from '@/lib/utils'
-import { updateInvoiceAction, markInvoicePaidAction } from '@/lib/actions/invoices'
+import { updateInvoiceAction } from '@/lib/actions/invoices'
 import { InvoiceForm } from '@/components/invoices/invoice-form'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -11,7 +11,7 @@ import { PriorityBadge } from '@/components/shared/priority-badge'
 import { AiEmailButton } from '@/components/shared/ai-email-button'
 import { MarkPaidButton } from '@/components/invoices/mark-paid-button'
 import { DeleteInvoiceButton } from '@/components/invoices/delete-invoice-button'
-import { ArrowLeft, Calendar, Clock, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Calendar, AlertTriangle } from 'lucide-react'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

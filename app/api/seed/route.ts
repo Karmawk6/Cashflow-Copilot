@@ -30,7 +30,6 @@ export async function POST() {
   const now = new Date()
   const daysAgo = (n: number) => new Date(now.getTime() - n * 86400000).toISOString().split('T')[0]
 
-  // Create demo clients
   const { data: clients } = await supabase.from('clients').insert([
     { organization_id: org.id, company_name: 'Meridian Growth Partners', contact_name: 'Sarah Chen', email: 'sarah@meridian.example.com', status: 'active', last_contact_date: daysAgo(2), tags: ['demo'] },
     { organization_id: org.id, company_name: 'BlueStone Digital', contact_name: 'Marcus Reid', email: 'marcus@bluestone.example.com', status: 'active', last_contact_date: daysAgo(12), tags: ['demo'] },
@@ -68,7 +67,6 @@ export async function POST() {
 
   const retainerSchedule = schedules?.[0]
 
-  // Create invoices
   await supabase.from('invoices').insert([
     {
       organization_id: org.id, client_id: meridian.id,
@@ -97,7 +95,6 @@ export async function POST() {
     },
   ])
 
-  // Create proposals
   await supabase.from('proposals').insert([
     {
       organization_id: org.id, client_id: cascade.id,
@@ -133,7 +130,6 @@ export async function POST() {
     },
   ])
 
-  // Log some activity
   await supabase.from('activities').insert([
     { organization_id: org.id, user_id: user.id, type: 'invoice_created', entity_type: 'invoice', description: 'Created invoice INV-2025-001 for Meridian Growth Partners', metadata: { amount: 12500, demo: true } },
     { organization_id: org.id, user_id: user.id, type: 'proposal_won', entity_type: 'proposal', description: 'Won proposal: Content Strategy Audit (Harlow & Associates)', metadata: { amount: 6500, demo: true } },

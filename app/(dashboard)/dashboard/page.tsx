@@ -3,10 +3,9 @@ import Link from 'next/link'
 import { createClient, getOrganization } from '@/lib/supabase/server'
 import { syncOrgWorkState } from '@/lib/follow-up-engine/sync'
 import { computeDashboardSummary, isPastDue } from '@/lib/follow-up-engine/engine'
-import { formatCurrency, formatDate, daysAgo } from '@/lib/utils'
+import { formatCurrency, daysAgo } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { InvoiceStatusBadge, ProposalStatusBadge } from '@/components/shared/status-badge'
+import { ProposalStatusBadge } from '@/components/shared/status-badge'
 import { PriorityBadge } from '@/components/shared/priority-badge'
 import {
   DollarSign,

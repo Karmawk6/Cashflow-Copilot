@@ -94,7 +94,6 @@ export async function runFollowUpEngineAction() {
     const { priority } = await syncInvoiceStatusAndPriority(supabase, invoice)
 
     if (invoiceNeedsFollowUp(invoice.due_date, invoice.status, invoice.last_reminder_date)) {
-      // Check if there's already a pending event for this invoice
       const { data: existing } = await supabase
         .from('follow_up_events')
         .select('id')

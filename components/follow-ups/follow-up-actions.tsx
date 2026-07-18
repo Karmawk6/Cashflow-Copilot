@@ -7,7 +7,7 @@ import { PrioritySelect } from '@/components/shared/priority-select'
 import { AiEmailModal } from '@/components/shared/ai-email-modal'
 import { updateFollowUpStatusAction, updateFollowUpPriorityAction } from '@/lib/actions/follow-ups'
 import { toast } from 'sonner'
-import type { EmailTemplateType, Priority } from '@/types/database'
+import type { Priority } from '@/types/database'
 
 interface FollowUpActionsProps {
   followUpId: string
@@ -22,13 +22,6 @@ interface FollowUpActionsProps {
   proposalTitle?: string
   dueDate?: string | null
   paymentLink?: string | null
-}
-
-const typeToEmailType: Record<string, EmailTemplateType> = {
-  invoice_reminder: 'invoice_reminder',
-  proposal_followup: 'proposal_followup',
-  ghosted_checkin: 'ghosted_checkin',
-  payment_upcoming: 'payment_upcoming',
 }
 
 export function FollowUpActions({
@@ -84,7 +77,7 @@ export function FollowUpActions({
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         context={{
-          type: typeToEmailType[type],
+          type,
           clientName,
           contactName,
           clientEmail,

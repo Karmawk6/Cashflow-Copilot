@@ -1,15 +1,14 @@
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient, getOrganization } from '@/lib/supabase/server'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { formatCurrency } from '@/lib/utils'
 import { updateClientAction, deleteClientAction } from '@/lib/actions/clients'
 import { ClientForm } from '@/components/clients/client-form'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ClientStatusBadge } from '@/components/shared/status-badge'
-import { InvoiceStatusBadge, ProposalStatusBadge } from '@/components/shared/status-badge'
+import { ClientStatusBadge, InvoiceStatusBadge, ProposalStatusBadge } from '@/components/shared/status-badge'
 import { Separator } from '@/components/ui/separator'
-import { ArrowLeft, Mail, Globe, Phone } from 'lucide-react'
+import { ArrowLeft, Mail, Globe } from 'lucide-react'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

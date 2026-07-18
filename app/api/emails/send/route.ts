@@ -115,7 +115,6 @@ export async function POST(request: Request) {
       metadata: { to, subject, demo: result.demo ?? false, via: result.via ?? 'platform' },
     })
 
-    // Update last reminder date on invoice if applicable
     if (context?.invoiceId) {
       await supabase
         .from('invoices')
@@ -124,7 +123,6 @@ export async function POST(request: Request) {
         .eq('organization_id', org.id)
     }
 
-    // Update last follow-up date on proposal if applicable
     if (context?.proposalId) {
       await supabase
         .from('proposals')

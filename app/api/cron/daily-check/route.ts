@@ -92,7 +92,6 @@ export async function GET(request: Request) {
           .eq('status', 'pending')
       }
 
-      // Create follow-up event if needed
       if (invoiceNeedsFollowUp(invoice.due_date, invoice.status, invoice.last_reminder_date)) {
         const { data: existing } = await supabase
           .from('follow_up_events')

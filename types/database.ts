@@ -335,22 +335,8 @@ export interface Activity {
 }
 
 // Joined types used in the UI
-export interface ProposalWithClient extends Proposal {
-  client: Pick<Client, 'company_name' | 'contact_name' | 'email'>
-}
-
 export interface RecurringScheduleWithClient extends RecurringSchedule {
   client: Pick<Client, 'company_name' | 'contact_name' | 'email'>
-}
-
-export interface InvoiceWithClient extends Invoice {
-  client: Pick<Client, 'company_name' | 'contact_name' | 'email'>
-}
-
-export interface FollowUpWithRelations extends FollowUpEvent {
-  client: Pick<Client, 'company_name' | 'contact_name' | 'email'> | null
-  invoice: Pick<Invoice, 'invoice_number' | 'amount' | 'due_date'> | null
-  proposal: Pick<Proposal, 'title' | 'amount' | 'sent_date'> | null
 }
 
 export type ActionState = { error?: string; success?: boolean } | undefined

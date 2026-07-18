@@ -16,12 +16,10 @@ export default async function AnalyticsPage() {
     { data: invoices },
     { data: proposals },
     { data: followUps },
-    { data: activities },
   ] = await Promise.all([
     supabase.from('invoices').select('*').eq('organization_id', org.id),
     supabase.from('proposals').select('*').eq('organization_id', org.id),
     supabase.from('follow_up_events').select('*').eq('organization_id', org.id),
-    supabase.from('activities').select('*').eq('organization_id', org.id).order('created_at', { ascending: false }).limit(100),
   ])
 
   // Revenue metrics

@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SettingsForm } from '@/components/settings/settings-form'
 import { TeamSection } from '@/components/settings/team-section'
 import { GmailConnectionCard } from '@/components/settings/gmail-connection'
