@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
 import { SettingsForm } from '@/components/settings/settings-form'
+import { AppearanceCard } from '@/components/settings/appearance-card'
 import { TeamSection } from '@/components/settings/team-section'
 import { GmailConnectionCard } from '@/components/settings/gmail-connection'
 import { gmailOauthConfigured } from '@/lib/gmail/oauth'
@@ -58,6 +59,7 @@ export default async function SettingsPage() {
         org={org}
         followUpRules={followUpRules ?? []}
       />
+      <AppearanceCard />
       {/* Gmail stays hidden unless this user already connected one — the
           platform sender (Resend + reply-to) is the default sending path. */}
       {org && gmailConnection && (

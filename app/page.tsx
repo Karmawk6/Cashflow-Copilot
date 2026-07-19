@@ -22,7 +22,7 @@ export default async function HomePage() {
   // -z-10 glow orbs above this div's background; overflow-x-clip stops them
   // from widening the page.
   return (
-    <div className="dark isolate min-h-screen overflow-x-clip bg-background text-foreground">
+    <div className="dark isolate min-h-screen overflow-x-clip bg-background text-foreground [color-scheme:dark]">
       <LandingHeader />
       <main>
         <Hero />
