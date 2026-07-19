@@ -130,6 +130,73 @@ export async function login(_prevState: ActionState, formData: FormData): Promis
   redirect('/dashboard')
 }
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Invalid email address'),
+})
+
+export async function requestPasswordReset(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = forgotPasswordSchema.safeParse({
+    email: formData.get('email') as string,
+  })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    // Our template links straight to /auth/confirm with token_hash; with
+    // Supabase's default template this becomes the post-verify redirect, so
+    // ?next= must ride along for the ?code= exchange path to land right.
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://duebird.io'}/auth/confirm?next=/reset-password`,
+  })
+
+  // Never surface errors: "no such user" (and even rate limits) must read the
+  // same as success, or this form becomes an account-enumeration oracle.
+  if (error) {
+    console.error('resetPasswordForEmail:', error.message)
+  }
+
+  return { success: true }
+}
+
+const resetPasswordSchema = z
+  .object({
+    password: z.string().min(8, 'Password must be at least 8 characters'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+export async function updatePassword(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = resetPasswordSchema.safeParse({
+    password: formData.get('password') as string,
+    confirmPassword: formData.get('confirmPassword') as string,
+  })
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  const supabase = await createClient()
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  })
+
+  if (error) {
+    // No session = the recovery link expired, was already used, or the user
+    // opened /reset-password directly.
+    if (error.name === 'AuthSessionMissingError' || error.message.toLowerCase().includes('session')) {
+      return { error: 'Your reset link has expired or was already used. Request a new one below.' }
+    }
+    return { error: error.message }
+  }
+
+  // End the recovery session so the user proves the new password by signing in.
+  await supabase.auth.signOut()
+  redirect('/login?notice=password_updated')
+}
+
 export async function logout() {
   const supabase = await createClient()
   await supabase.auth.signOut()

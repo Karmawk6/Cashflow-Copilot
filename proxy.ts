@@ -33,7 +33,12 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/onboarding')
+  const isAuthRoute =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/onboarding') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password')
   const isProtectedRoute =
     !isAuthRoute &&
     // /auth/* must stay reachable without a session: /auth/confirm is where
@@ -53,7 +58,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && isAuthRoute && pathname !== '/onboarding') {
+  // /reset-password stays reachable with a session: the recovery email link
+  // signs the user in (verifyOtp) right before they land here to set the
+  // new password — bouncing them to /dashboard would break the flow.
+  if (user && isAuthRoute && pathname !== '/onboarding' && pathname !== '/reset-password') {
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

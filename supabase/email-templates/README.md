@@ -6,10 +6,11 @@ Both live at https://supabase.com/dashboard → project `stsdtserysibovopwhkv`.
 
 > **Status (2026-07-18):** Step 1 (custom SMTP) is **done** — production signup
 > emails already send from `Duebird <noreply@duebird.io>` via a dedicated Resend
-> key (`duebird-supabase-smtp`). Step 2 (the branded template) is **still
-> pending**: the first paste didn't save during a Supabase dashboard incident,
-> so the email body/subject are still the Supabase defaults. Redo step 2 below
-> and confirm the subject line changed by sending a test signup.
+> key (`duebird-supabase-smtp`). Step 2 (the branded templates — Confirm signup
+> AND Reset Password) is **still pending**: the first Confirm-signup paste
+> didn't save during a Supabase dashboard incident, so both templates still use
+> the Supabase defaults. Do step 2 below for both and confirm the subject lines
+> changed by sending a test email.
 
 ## 1. Custom SMTP (fixes the sender) — DONE
 
@@ -29,16 +30,28 @@ Bonus: custom SMTP lifts Supabase's ~3-emails/hour built-in limit — after
 enabling, raise the email rate limit under Authentication → Rate Limits
 (e.g. 60/hour).
 
-## 2. Branded template (fixes the content) — PENDING
+## 2. Branded templates (fixes the content) — PENDING
 
-Authentication → **Email Templates** → **Confirm signup**:
+Authentication → **Email Templates**, one template at a time (Code view,
+replace everything). After saving each one, **reload the dashboard page and
+confirm the body/subject persisted** — a previous paste was silently lost
+during a dashboard incident.
+
+**Confirm signup:**
 
 - Subject: `Confirm your email — Duebird`
-- Body: paste the contents of `confirm-signup.html` (Code view, replace everything)
+- Body: paste the contents of `confirm-signup.html`
 
-The link uses `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`,
-which is the app's confirm route — Site URL must be `https://duebird.io`
-(Authentication → URL Configuration).
+**Reset Password:**
 
-Other templates (Invite user, Magic Link, Reset Password) are unused by the app
-today; rebrand them later if those flows ship.
+- Subject: `Reset your password — Duebird`
+- Body: paste the contents of `reset-password.html`
+
+Both links target the app's `/auth/confirm` route via
+`{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=...` — Site URL
+must be `https://duebird.io` (Authentication → URL Configuration). The reset
+flow works even before the paste (Supabase's default template goes through the
+`?code=` redirect path), but the email is unbranded until then.
+
+Other templates (Invite user, Magic Link) are unused by the app today; rebrand
+them later if those flows ship.

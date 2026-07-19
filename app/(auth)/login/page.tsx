@@ -2,16 +2,17 @@
 
 import { Suspense, useActionState } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
 import { login } from '@/lib/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormError } from '@/components/shared/form-error'
+import { AuthNotice, type AuthNotices } from '@/components/shared/auth-notice'
 
-// Messages arriving via redirect (signup flow, email-confirmation link).
-const notices: Record<string, { text: string; tone: 'info' | 'error' }> = {
+// Messages arriving via redirect (signup flow, email-confirmation link,
+// password reset).
+const notices: AuthNotices = {
   confirm_email_sent: {
     text: 'Account created! Check your email for a confirmation link, then sign in.',
     tone: 'info',
@@ -24,20 +25,10 @@ const notices: Record<string, { text: string; tone: 'info' | 'error' }> = {
     text: 'That confirmation link is invalid or has expired. Try signing in below.',
     tone: 'error',
   },
-}
-
-function AuthNotice() {
-  const searchParams = useSearchParams()
-  const key = searchParams.get('notice') ?? searchParams.get('error')
-  const notice = key ? notices[key] : undefined
-  if (!notice) return null
-  if (notice.tone === 'error') return <FormError message={notice.text} />
-
-  return (
-    <div className="rounded-md bg-primary/10 px-3 py-2 text-sm text-primary">
-      {notice.text}
-    </div>
-  )
+  password_updated: {
+    text: 'Password updated — sign in with your new password.',
+    tone: 'info',
+  },
 }
 
 export default function LoginPage() {
@@ -52,7 +43,7 @@ export default function LoginPage() {
       <CardContent>
         <form action={action} className="space-y-4">
           <Suspense>
-            <AuthNotice />
+            <AuthNotice notices={notices} />
           </Suspense>
           <FormError message={state?.error} />
           <div className="space-y-2">
@@ -60,7 +51,12 @@ export default function LoginPage() {
             <Input id="email" name="email" type="email" placeholder="you@agency.com" required autoComplete="email" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <Link href="/forgot-password" className="text-sm font-medium text-primary hover:underline">
+                Forgot password?
+              </Link>
+            </div>
             <Input id="password" name="password" type="password" placeholder="••••••••" required autoComplete="current-password" />
           </div>
           <Button type="submit" className="w-full" disabled={pending}>
