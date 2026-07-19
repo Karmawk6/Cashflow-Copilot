@@ -13,6 +13,9 @@ description: Build, launch, and drive Duebird locally with Playwright to verify 
   `http://localhost:3001/login` for 200.
 - Local `.env.local` points at the LIVE shared Supabase DB — confine all test
   writes to the "Claude UI Test - safe to delete" workspace.
+- Prod smoke: the same Playwright scripts work against production — point them
+  at `https://duebird.io` (e.g. a `VERIFY_BASE` env switch); the test account
+  below exists in the prod DB.
 
 ## Drive (Playwright)
 

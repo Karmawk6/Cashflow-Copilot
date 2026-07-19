@@ -1,5 +1,12 @@
 # Gmail sending setup (Google OAuth, testing mode)
 
+> **Status: deprioritized (2026-07).** The default sending path is the platform
+> sender — Resend from `followups@duebird.io` with Reply-To set to the member —
+> and the Settings card below is only rendered for users who **already have** a
+> Gmail connection (see `app/(dashboard)/settings/page.tsx`). New users never
+> see it. Everything in this doc still works and is kept for when per-user Gmail
+> sending is revisited.
+
 Lets each user connect their own Gmail from **Settings → Email sending**, so approved
 follow-ups are sent from their real address and replies land in their inbox.
 
@@ -29,8 +36,9 @@ The app only requests two scopes: `gmail.send` (send, never read) and
    GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
    GOOGLE_CLIENT_SECRET=GOCSPX-...
    ```
-6. Redeploy. The Settings card switches from the setup notice to a
-   **Connect Gmail** button.
+6. Redeploy. For users with an existing Gmail connection, the Settings card
+   switches from the setup notice to a **Connect Gmail** button. (While the
+   feature is deprioritized, users without a connection see no card at all.)
 
 ## Testing-mode limitations (why, and the upgrade path)
 

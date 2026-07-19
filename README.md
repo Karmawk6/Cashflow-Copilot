@@ -30,7 +30,7 @@ Demo mode uses template-based AI email drafts (no OpenAI key needed) and logs em
 - Follow-up engine with priority scoring (low → critical based on age + amount) and manual priority overrides
 - AI-generated follow-up emails with tone control (friendly / professional / firm) — a human always reviews and hits send
 - Email templates (per-type + custom)
-- Multi-user workspaces: owners invite teammates by email from Settings
+- Multi-user workspaces: owners invite teammates by email and can remove members from Settings → Team
 - Invite-only signup gated by an `approved_emails` allowlist
 - Activity log
 - Analytics: recovered revenue, win rate, avg payment speed
@@ -124,27 +124,41 @@ app/
   (legal)/          — public /terms and /privacy pages
   api/              — AI email gen, email send, CSV import, seed, cron
 lib/
-  actions/          — Server Actions (CRUD + business logic)
+  actions/          — Server Actions (CRUD + business logic; entity-priority.ts is the shared priority-update core)
   ai/               — OpenAI email generation
+  api/              — Shared API-route helpers (http.ts: JSON error responses)
   email/            — Resend email sending
   follow-up-engine/ — Pure functions: priority, needs-follow-up, dashboard summary
-  supabase/         — Supabase client helpers (server + browser + admin/service-role)
+  gmail/            — Gmail OAuth + per-user sending (optional, see GMAIL_SETUP.md)
+  hooks/            — Client hooks (use-run-action.ts: mutation + toast pattern)
+  supabase/         — Supabase client helpers (server + browser + admin/service-role + org guards)
 components/
   landing/          — landing page sections (hero, FAQ, screenshots, scroll-reveal, …)
   ui/               — shadcn/ui primitives
   clients/          — Client form
   invoices/         — Invoice form
   proposals/        — Proposal form
-  settings/         — Follow-up rules + team invitations
-  shared/           — Badges, empty states, sidebar, header
+  settings/         — Follow-up rules, team invitations + member removal, Gmail connection
+  shared/           — Badges, priority select, form errors, empty states, sidebar, header
 types/
   database.ts       — Full TypeScript types + Supabase Database generic
 supabase/
   schema.sql        — Complete Postgres schema with RLS policies
   migration-*.sql   — Incremental migrations for existing databases (run in SQL editor)
+  email-templates/  — Branded Supabase auth email templates + setup README
 public/
   screenshots/      — Product screenshots embedded on the landing page
 ```
+
+### Code conventions
+
+Reuse these shared helpers instead of re-inlining the patterns:
+
+- **Server actions** start with the org guards in `lib/supabase/guards.ts` (`requireUser` / `requireOrg`) rather than hand-rolling auth + org lookups.
+- **API routes** return errors through `lib/api/http.ts` so status codes and JSON shapes stay consistent.
+- **Client mutation buttons** (anything that calls a server action and toasts the result) go through `useRunAction` (`lib/hooks/use-run-action.ts`).
+- **Form errors** render with `components/shared/form-error.tsx`.
+- **Priority updates** for invoices/proposals share one core in `lib/actions/entity-priority.ts`.
 
 ### Multi-tenancy
 
@@ -169,6 +183,8 @@ When `OPENAI_API_KEY` is set, the AI reads context (client name, amount, invoice
 
 ## Suggested next features
 
+- Password reset flow (none exists today — users who forget their password are stuck)
+- Self-service account deletion (the privacy policy currently promises email-based deletion within 30 days)
 - Client portal (shareable payment links with invoice status)
 - Stripe integration for payment tracking
 - Zapier / webhook on invoice paid
