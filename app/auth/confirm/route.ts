@@ -43,6 +43,11 @@ export async function GET(request: NextRequest) {
     redirect('/login?notice=email_confirmed')
   }
 
-  // No recognizable params (crawler, truncated link) — just go sign in.
+  // No recognizable params. A consumed/expired default-template recovery link
+  // arrives here too (Supabase strips the code and appends error params on its
+  // verify redirect) — offer a fresh reset link rather than the login form.
+  if (next === '/reset-password') redirect('/forgot-password?error=recovery_failed')
+
+  // Otherwise (crawler, truncated link) — just go sign in.
   redirect('/login')
 }
