@@ -104,11 +104,17 @@ export function TeamSection({
                 </Button>
               </div>
               {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
-              {state?.success && (
+              {state?.success && state.emailed && (
                 <p className="text-sm text-success">
-                  Invitation created. Ask them to sign up at{' '}
-                  <span className="font-medium">{appUrl}</span> with that exact email — they&apos;ll
-                  be offered to join this workspace automatically.
+                  Invitation sent — we&apos;ve emailed them instructions. They&apos;ll join this
+                  workspace automatically once they sign up (or sign in) with that exact email.
+                </p>
+              )}
+              {state?.success && !state.emailed && (
+                <p className="text-sm text-success">
+                  Invitation created, but the email couldn&apos;t be sent. Ask them to sign up
+                  at <span className="font-medium">{appUrl}</span> with that exact email —
+                  they&apos;ll be offered to join this workspace automatically.
                 </p>
               )}
             </form>

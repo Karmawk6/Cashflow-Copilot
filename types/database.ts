@@ -355,4 +355,6 @@ export interface EmailContext {
   paymentLink?: string | null
 }
 
-export type ActionState = { error?: string; success?: boolean } | undefined
+export type ActionState =
+  | { error?: string; success?: boolean; emailed?: boolean }
+  | undefined

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient, getOrganization, getUser } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { sendEmail } from '@/lib/email/send'
 import type { ActionState } from '@/types/database'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -40,8 +41,43 @@ export async function inviteTeammate(_prevState: ActionState, formData: FormData
     }
   }
 
+  // Email the invitee. Best-effort: the invitation row already exists and the
+  // sign-up-with-this-email path works without the email, so a send failure
+  // downgrades the UI message (emailed: false) instead of failing the invite.
+  let emailed = false
+  try {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', user.id)
+      .single()
+    // Collapse whitespace: full_name is user-controlled and goes in the subject.
+    const inviterName = (profile?.full_name ?? user.email ?? 'A teammate')
+      .replace(/\s+/g, ' ')
+      .trim()
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://duebird.io'
+
+    await sendEmail({
+      to: email,
+      subject: `${inviterName} invited you to join ${org.name} on Duebird`,
+      body: `${inviterName} has invited you to join ${org.name} on Duebird — the shared workspace their team uses to track invoices, proposals, and follow-ups.
+
+To accept the invitation:
+
+1. Sign in at ${appUrl}/login — or create an account at ${appUrl}/signup if you don't have one yet.
+2. Use this exact email address: ${email}
+3. You'll be offered to join ${org.name} automatically.
+
+If you weren't expecting this, you can safely ignore this email.`,
+      replyTo: user.email ?? undefined,
+    })
+    emailed = true
+  } catch (e) {
+    console.error('invite email failed:', e instanceof Error ? e.message : e)
+  }
+
   revalidatePath('/settings')
-  return { success: true }
+  return { success: true, emailed }
 }
 
 export async function revokeInvitation(invitationId: string) {
