@@ -18,6 +18,7 @@ export default async function OnboardingPage({
     <OnboardingForm
       invitations={invitations ?? []}
       inviteError={invite_error === '1'}
+      userEmail={user.email ?? ''}
     />
   )
 }

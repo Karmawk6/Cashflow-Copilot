@@ -1,7 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
-import { completeOnboarding } from '@/lib/actions/auth'
+import { completeOnboarding, logout } from '@/lib/actions/auth'
 import { acceptInvitation } from '@/lib/actions/team'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -27,9 +27,11 @@ interface PendingInvitation {
 export function OnboardingForm({
   invitations,
   inviteError,
+  userEmail,
 }: {
   invitations: PendingInvitation[]
   inviteError?: boolean
+  userEmail: string
 }) {
   const [state, action, pending] = useActionState(completeOnboarding, undefined)
 
@@ -115,6 +117,15 @@ export function OnboardingForm({
           <Button type="submit" className="w-full" disabled={pending}>
             {pending ? 'Setting up...' : 'Get started'}
           </Button>
+        </form>
+        {/* Escape hatch: without this, a session for an account that can't
+            onboard (not allowlisted, no pending invite) is trapped here —
+            the proxy bounces every /login visit back to /dashboard. */}
+        <form action={logout} className="mt-4 text-center text-sm text-muted-foreground">
+          Signed in as <span className="font-medium">{userEmail}</span> —{' '}
+          <button type="submit" className="font-medium text-primary hover:underline">
+            Sign out
+          </button>
         </form>
       </CardContent>
     </Card>
