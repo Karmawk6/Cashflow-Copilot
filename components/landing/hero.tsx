@@ -15,9 +15,9 @@ export function Hero() {
           </span>
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground motion-safe:animate-fade-up motion-safe:[animation-delay:120ms]">
-          Duebird gives consultants and agencies one dashboard for clients,
-          proposals, and invoices — and tells you exactly who to follow up with
-          today, with the email already drafted.
+          Duebird gives consultants, agencies, and community lenders one
+          dashboard for clients, proposals, and invoices — and tells you
+          exactly who to follow up with today, with the email already drafted.
         </p>
         <div className="mt-8 flex flex-col items-center gap-3 motion-safe:animate-fade-up motion-safe:[animation-delay:240ms]">
           <BookACallButton className="px-10 shadow-[0_8px_32px_-8px_hsl(229_60%_58%/0.5)]" />

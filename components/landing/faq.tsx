@@ -28,6 +28,11 @@ const faqs = [
       'Never. Duebird drafts every follow-up for you, but a human — you — always reviews the email and hits send. Nothing goes to a client without your explicit approval.',
   },
   {
+    question: 'Does Duebird work for CDFIs and loan funds?',
+    answer:
+      'Yes. Payment plans track repayment schedules — like "7 of 24 billed" — with a real invoice generated each period, borrowers get a courtesy reminder before each installment is due, and every borrower email is reviewed and approved by your staff before it sends.',
+  },
+  {
     question: 'Can my team use it?',
     answer:
       'Yes. Workspace owners can invite teammates by email from Settings, and everyone shares the same client list, pipeline, and follow-up queue. Seats are part of the pricing conversation on the call.',

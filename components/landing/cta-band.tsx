@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { BookACallButton } from './book-a-call-button'
+import { LeadCaptureForm } from './lead-capture-form'
 import { ScrollReveal } from './scroll-reveal'
 
 export function CtaBand() {
@@ -26,6 +27,7 @@ export function CtaBand() {
               </Link>
             </p>
           </div>
+          <LeadCaptureForm />
         </ScrollReveal>
       </div>
     </section>

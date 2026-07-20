@@ -1,9 +1,10 @@
 import { ScrollReveal } from './scroll-reveal'
 
-// PLACEHOLDER numbers — replace with real customer data as it lands.
+// Every stat here must be true by construction of the product — no claims
+// implying measured customer outcomes until we have real data to back them.
 const stats = [
-  { value: '5 min', label: 'daily routine to clear your follow-up queue' },
-  { value: '3×', label: 'more follow-ups actually sent' },
+  { value: '1 list', label: 'every follow-up in one place, every morning' },
+  { value: '5 min', label: 'the daily routine Duebird is designed around' },
   { value: '$0', label: 'of your money ever passes through us' },
   { value: '100%', label: 'of emails approved by you before sending' },
 ]

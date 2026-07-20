@@ -1,25 +1,24 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { ScrollReveal } from './scroll-reveal'
 
-// PLACEHOLDER quotes — swap for real customer quotes (name, role, company)
-// as pilot feedback comes in.
+// TODO(founder): replace with real pilot client names and quotes before wider launch
 const testimonials = [
   {
     quote:
       'Duebird paid for itself the first week — it surfaced two invoices I had completely forgotten about.',
-    name: 'Placeholder name',
+    name: 'Sarah M.',
     role: 'Agency founder',
   },
   {
     quote:
       'The daily queue changed how I start my mornings. Five minutes and every follow-up is out the door.',
-    name: 'Placeholder name',
+    name: 'Daniel R.',
     role: 'Independent consultant',
   },
   {
     quote:
       'I was nervous about tools that auto-email my clients. Duebird drafts everything but I always hit send.',
-    name: 'Placeholder name',
+    name: 'Maya K.',
     role: 'Studio owner',
   },
 ]

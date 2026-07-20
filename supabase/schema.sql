@@ -237,6 +237,34 @@ CREATE TRIGGER trg_normalize_approved_email
 ALTER TABLE approved_emails ENABLE ROW LEVEL SECURITY;
 
 -- =============================================================================
+-- LANDING LEADS (public email capture)
+-- =============================================================================
+-- Visitors who aren't ready to book a call leave their email on the landing
+-- page; the server action inserts here with the service-role key. RLS is
+-- enabled with NO policies on purpose — anon/authenticated see nothing.
+CREATE TABLE IF NOT EXISTS landing_leads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT NOT NULL UNIQUE,
+  source TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION public.normalize_landing_lead_email()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.email := lower(trim(NEW.email));
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public, pg_temp;
+
+DROP TRIGGER IF EXISTS trg_normalize_landing_lead_email ON landing_leads;
+CREATE TRIGGER trg_normalize_landing_lead_email
+  BEFORE INSERT OR UPDATE ON landing_leads
+  FOR EACH ROW EXECUTE FUNCTION normalize_landing_lead_email();
+
+ALTER TABLE landing_leads ENABLE ROW LEVEL SECURITY;
+
+-- =============================================================================
 -- AUTO-CREATE PROFILE ON SIGNUP
 -- =============================================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()

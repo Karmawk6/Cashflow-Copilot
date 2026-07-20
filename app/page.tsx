@@ -5,6 +5,7 @@ import { Hero } from '@/components/landing/hero'
 import { HowItWorks } from '@/components/landing/how-it-works'
 import { Screenshots } from '@/components/landing/screenshots'
 import { FeaturesGrid } from '@/components/landing/features-grid'
+import { CommunityLenders } from '@/components/landing/community-lenders'
 import { StatsBand } from '@/components/landing/stats-band'
 import { Testimonials } from '@/components/landing/testimonials'
 import { Faq } from '@/components/landing/faq'
@@ -29,6 +30,7 @@ export default async function HomePage() {
         <HowItWorks />
         <Screenshots />
         <FeaturesGrid />
+        <CommunityLenders />
         <StatsBand />
         <Testimonials />
         <Faq />

@@ -86,6 +86,12 @@ export type Database = {
         Update: DbRow<Partial<Omit<ApprovedEmail, 'created_at'>>>
         Relationships: []
       }
+      landing_leads: {
+        Row: DbRow<LandingLead>
+        Insert: DbRow<Partial<Omit<LandingLead, 'id' | 'created_at'>> & Pick<LandingLead, 'email'>>
+        Update: DbRow<Partial<Omit<LandingLead, 'id' | 'created_at'>>>
+        Relationships: []
+      }
     }
     Views: { [_ in never]: never }
     Functions: {
@@ -106,6 +112,13 @@ export type Database = {
 export interface ApprovedEmail {
   email: string
   note: string | null
+  created_at: string
+}
+
+export interface LandingLead {
+  id: string
+  email: string
+  source: string | null
   created_at: string
 }
 
